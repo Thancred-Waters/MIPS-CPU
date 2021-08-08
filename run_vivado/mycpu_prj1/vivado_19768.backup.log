@@ -1,0 +1,31 @@
+#-----------------------------------------------------------
+# Vivado v2021.1 (64-bit)
+# SW Build 3247384 on Thu Jun 10 19:36:33 MDT 2021
+# IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
+# Start of session at: Sat Aug  7 15:10:23 2021
+# Process ID: 19768
+# Current directory: D:/资料/lab/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent11648 D:\资料\lab\CPU_CDE\mycpu_verify\run_vivado\mycpu_prj1\mycpu_prj1.xpr
+# Log file: D:/资料/lab/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1/vivado.log
+# Journal file: D:/资料/lab/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project D:/资料/lab/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1/mycpu_prj1.xpr
+INFO: [Project 1-313] Project file moved from 'E:/ucas19_20_all/release/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1' since last save.
+WARNING: [filemgmt 56-2] IPUserFilesDir: Could not find the directory 'D:/资料/lab/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1/mycpu_prj1.ip_user_files', nor could it be found using path 'E:/ucas19_20_all/release/CPU_CDE/mycpu_verify/run_vivado/mycpu_prj1/mycpu_prj1.ip_user_files'.
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'D:/Program_Files/vivado_2021_1/Vivado/2021.1/data/ip'.
+WARNING: [IP_Flow 19-2162] IP 'clk_pll' is locked:
+* IP definition 'Clocking Wizard (6.0)' for IP 'clk_pll' (customized with software release 2019.2) has a different revision in the IP Catalog.
+INFO: [Project 1-230] Project 'mycpu_prj1.xpr' upgraded for this version of Vivado.
+open_project: Time (s): cpu = 00:00:38 ; elapsed = 00:00:30 . Memory (MB): peak = 1129.289 ; gain = 0.000
+upgrade_project -migrate_output_products
+report_ip_status -name ip_status 
+update_compile_order -fileset sources_1
+report_ip_status -name ip_status 
+report_ip_status -name ip_status 
+exit
+INFO: [Common 17-206] Exiting Vivado at Sat Aug  7 15:26:04 2021...

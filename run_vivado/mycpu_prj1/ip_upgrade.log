@@ -1,0 +1,54 @@
+Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2021.1 (win64) Build 3247384 Thu Jun 10 19:36:33 MDT 2021
+| Date         : Sat Aug  7 15:39:05 2021
+| Host         : LAPTOP-8DNNU5PI running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7a200tfbg676-2
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'clk_pll'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of clk_pll (xilinx.com:ip:clk_wiz:6.0) from (Rev. 4) to (Rev. 8)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'clk_pll'.
+
+
+-Upgrade has renamed interface 'CLOCK_CLK_IN1' as 'clock_CLK_IN1' (xilinx.com:signal:clock:1.0)
+
+-Upgraded interface 'clock_CLK_IN1' (xilinx.com:signal:clock:1.0) differs from original interface ':::'
+
+-Upgrade has renamed interface 'CLOCK_CLK_OUT1' as 'clock_CLK_OUT1' (xilinx.com:signal:clock:1.0)
+
+-Upgraded interface 'clock_CLK_OUT1' (xilinx.com:signal:clock:1.0) differs from original interface ':::'
+
+-Upgrade has renamed interface 'CLOCK_CLK_OUT2' as 'clock_CLK_OUT2' (xilinx.com:signal:clock:1.0)
+
+-Upgraded interface 'clock_CLK_OUT2' (xilinx.com:signal:clock:1.0) differs from original interface ':::'
+
+-Upgrade has removed interface 'reset'
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'clk_pll'. These changes may impact your design.
+
+
+-Upgrade has removed port 'reset'
+
+-Upgrade has added port 'clk_in1'
+
+-Upgrade has added port 'cpu_clk'
+
+-Upgrade has added port 'timer_clk'
+
+
