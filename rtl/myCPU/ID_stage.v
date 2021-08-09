@@ -9,6 +9,11 @@ module id_stage(
     output                         ds_use_rt     ,//是否使用到寄存器rt
     output [4:0]                   rs_addr       ,
     output [4:0]                   rt_addr       ,//检查ALU操作数是否存在冲突
+    //forward
+    input [1:0]                    forward_rs    ,
+    input [1:0]                    forward_rt    ,
+    input [31:0]                   ms_to_ds_bus  ,//mem阶段前递数据
+    input [31:0]                   es_to_ds_bus  ,//exe阶段前递数据
     //allowin
     input                          es_allowin    ,
     output                         ds_allowin    ,
@@ -193,7 +198,7 @@ assign ds_use_rs    = ~(src1_is_sa | src1_is_pc) & ds_valid;
 assign rs_addr      = rs;
 assign src2_is_imm  = inst_addiu | inst_lui | inst_lw | inst_sw;
 assign src2_is_8    = inst_jal;
-assign ds_use_rt    = (~(src2_is_imm | src2_is_8) | inst_sw) & ds_valid;//sw需要将rt中的值写入内存，因此也需要检查读写相关
+assign ds_use_rt    = (~(src2_is_imm | src2_is_8) | inst_sw) & ds_valid;//sw需要将rt中的值写入内存，因此也需要检查写后读相关
 assign rt_addr      = rt;
 assign res_from_mem = inst_lw;
 assign dst_is_r31   = inst_jal;
@@ -219,8 +224,14 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
-assign rs_value = rf_rdata1;
-assign rt_value = rf_rdata2;
+assign rs_value = {32{forward_rs==2'b11}} & es_to_ds_bus
+                | {32{forward_rs==2'b10}} & ms_to_ds_bus 
+                | {32{forward_rs==2'b01}} & rf_wdata
+                | {32{forward_rs==2'b00}} & rf_rdata1;//mux 根据冲突情况选择数据源
+assign rt_value = {32{forward_rt==2'b11}} & es_to_ds_bus
+                | {32{forward_rt==2'b10}} & ms_to_ds_bus 
+                | {32{forward_rt==2'b01}} & rf_wdata
+                | {32{forward_rt==2'b00}} & rf_rdata2;
 
 assign rs_eq_rt = (rs_value == rt_value);
 assign br_taken = (   inst_beq  &&  rs_eq_rt

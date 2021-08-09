@@ -1,3 +1,5 @@
+`include "mycpu.h"
+
 module mycpu_top(
     input         clk,
     input         resetn,
@@ -39,6 +41,8 @@ wire [`BR_BUS_WD         :0] br_bus;//br_taken: 1 bit + br_target: 32 bit = 33 b
 
 wire stallD;
 wire stallF;
+wire [1:0] forward_rs;
+wire [1:0] forward_rt;
 wire ds_use_rs;
 wire [4:0] rs_addr;
 wire ds_use_rt;
@@ -49,6 +53,9 @@ wire       ms_write_reg;
 wire [4:0] ms_reg_dest;
 wire       ws_write_reg;
 wire [4:0] ws_reg_dest;
+wire [31:0] ms_to_ds_bus;
+wire es_read_mem;
+wire [31:0] es_to_ds_bus;
 
 // IF stage
 if_stage if_stage(
@@ -78,7 +85,10 @@ id_stage id_stage(
     .ds_use_rs      (ds_use_rs      ),
     .rs_addr        (rs_addr        ),
     .ds_use_rt      (ds_use_rt      ),
-    .rt_addr        (rt_addr      ),
+    .rt_addr        (rt_addr        ),
+    //forward
+    .forward_rs     (forward_rs     ),
+    .forward_rt     (forward_rt     ),
     //allowin
     .es_allowin     (es_allowin     ),
     .ds_allowin     (ds_allowin     ),
@@ -91,7 +101,11 @@ id_stage id_stage(
     //to fs
     .br_bus         (br_bus         ),
     //to rf: for write back
-    .ws_to_rf_bus   (ws_to_rf_bus   )
+    .ws_to_rf_bus   (ws_to_rf_bus   ),
+    //from ms
+    .ms_to_ds_bus   (ms_to_ds_bus   ),
+    //from ds
+    .es_to_ds_bus   (es_to_ds_bus   )
 );
 // EXE stage
 exe_stage exe_stage(
@@ -100,6 +114,9 @@ exe_stage exe_stage(
     //stall
     .es_write_reg   (es_write_reg   ),
     .es_reg_dest    (es_reg_dest    ),
+    //forward
+    .es_read_mem    (es_read_mem    ),
+    .es_to_ds_bus   (es_to_ds_bus   ),
     //allowin
     .ms_allowin     (ms_allowin     ),
     .es_allowin     (es_allowin     ),
@@ -132,7 +149,9 @@ mem_stage mem_stage(
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
     //from data-sram
-    .data_sram_rdata(data_sram_rdata)
+    .data_sram_rdata(data_sram_rdata),
+    //to ds
+    .ms_to_ds_bus   (ms_to_ds_bus   )
 );
 // WB stage
 wb_stage wb_stage(
@@ -162,11 +181,16 @@ hazard hazard(
     .rt_addr(rt_addr),
     .es_write_reg(es_write_reg),
     .es_reg_dest(es_reg_dest),
+    .es_read_mem(es_read_mem),
     .ms_write_reg(ms_write_reg),
     .ms_reg_dest(ms_reg_dest),
     .ws_write_reg(ws_write_reg),
     .ws_reg_dest(ws_reg_dest),
+    //stall
     .stallD(stallD),
-    .stallF(stallF)
+    .stallF(stallF),
+    //forward
+    .forward_rs(forward_rs),
+    .forward_rt(forward_rt)
 );
 endmodule

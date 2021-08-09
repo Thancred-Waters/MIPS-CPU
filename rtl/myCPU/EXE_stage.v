@@ -6,6 +6,9 @@ module exe_stage(
     //stall
     output                         es_write_reg  ,
     output [4:0]                   es_reg_dest   ,
+    //forward
+    output                         es_read_mem   ,//是否读内存
+    output [31:0]                  es_to_ds_bus  ,//alu计算结果
     //allowin
     input                          ms_allowin    ,
     output                         es_allowin    ,
@@ -61,8 +64,9 @@ assign es_reg_dest=es_dest;
 wire [31:0] es_alu_src1   ;
 wire [31:0] es_alu_src2   ;
 wire [31:0] es_alu_result ;
+wire [31:0] mem_addr      ;
 
-wire        es_res_from_mem;
+wire es_res_from_mem;
 
 assign es_res_from_mem = es_load_op;
 assign es_to_ms_bus = {es_res_from_mem,  //70:70
@@ -71,6 +75,10 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_alu_result  ,  //63:32
                        es_pc             //31:0
                       };
+
+//数据前推组件
+assign es_read_mem  = es_res_from_mem & es_valid;
+assign es_to_ds_bus = es_alu_result;
 
 assign es_ready_go    = 1'b1;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
@@ -99,12 +107,13 @@ alu u_alu(
     .alu_op     (es_alu_op    ),
     .alu_src1   (es_alu_src1  ),
     .alu_src2   (es_alu_src2  ),
-    .alu_result (es_alu_result)
+    .alu_result (es_alu_result),
+    .mem_addr   (mem_addr     )
     );
 
 assign data_sram_en    = 1'b1;
 assign data_sram_wen   = es_mem_we&&es_valid ? 4'hf : 4'h0;
-assign data_sram_addr  = es_alu_result;
+assign data_sram_addr  = mem_addr;
 assign data_sram_wdata = es_rt_value;
 
 endmodule

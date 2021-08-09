@@ -45,5 +45,5 @@ always @(posedge clk)
 assign b=a;
 ```
 
-![image-20210807231604753](D:\Programs\vivado\CPU_CDE\image-20210807231604753.png)
+![image-20210807231604753](image-20210807231604753.png)
 

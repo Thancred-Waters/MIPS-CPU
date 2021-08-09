@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="32,393.886 ns"></ZoomStartTime>
-      <ZoomEndTime time="32,460.887 ns"></ZoomEndTime>
-      <Cursor1Time time="21,975.000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="214.000001 us"></ZoomEndTime>
+      <Cursor1Time time="268.515000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="336"></NameColumnWidth>
-      <ValueColumnWidth column_width="154"></ValueColumnWidth>
+      <ValueColumnWidth column_width="139"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="66" />
+   <WVObjectSize size="85" />
    <wvobject fp_name="/tb_top/resetn" type="logic">
       <obj_property name="ElementShortName">resetn</obj_property>
       <obj_property name="ObjectShortName">resetn</obj_property>
@@ -248,13 +248,45 @@
       <obj_property name="ElementShortName">stallF</obj_property>
       <obj_property name="ObjectShortName">stallF</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/src1_use_reg" type="logic">
-      <obj_property name="ElementShortName">src1_use_reg</obj_property>
-      <obj_property name="ObjectShortName">src1_use_reg</obj_property>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/es_write_reg" type="logic">
+      <obj_property name="ElementShortName">es_write_reg</obj_property>
+      <obj_property name="ObjectShortName">es_write_reg</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/src1_addr" type="array">
-      <obj_property name="ElementShortName">src1_addr[4:0]</obj_property>
-      <obj_property name="ObjectShortName">src1_addr[4:0]</obj_property>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/es_reg_dest" type="array">
+      <obj_property name="ElementShortName">es_reg_dest[4:0]</obj_property>
+      <obj_property name="ObjectShortName">es_reg_dest[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ms_write_reg" type="logic">
+      <obj_property name="ElementShortName">ms_write_reg</obj_property>
+      <obj_property name="ObjectShortName">ms_write_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ms_reg_dest" type="array">
+      <obj_property name="ElementShortName">ms_reg_dest[4:0]</obj_property>
+      <obj_property name="ObjectShortName">ms_reg_dest[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ws_write_reg" type="logic">
+      <obj_property name="ElementShortName">ws_write_reg</obj_property>
+      <obj_property name="ObjectShortName">ws_write_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ws_reg_dest" type="array">
+      <obj_property name="ElementShortName">ws_reg_dest[4:0]</obj_property>
+      <obj_property name="ObjectShortName">ws_reg_dest[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ds_use_rs" type="logic">
+      <obj_property name="ElementShortName">ds_use_rs</obj_property>
+      <obj_property name="ObjectShortName">ds_use_rs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/rs_addr" type="array">
+      <obj_property name="ElementShortName">rs_addr[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs_addr[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ds_use_rt" type="logic">
+      <obj_property name="ElementShortName">ds_use_rt</obj_property>
+      <obj_property name="ObjectShortName">ds_use_rt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/rt_addr" type="array">
+      <obj_property name="ElementShortName">rt_addr[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rt_addr[4:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/es_write_reg" type="logic">
       <obj_property name="ElementShortName">es_write_reg</obj_property>
@@ -280,8 +312,52 @@
       <obj_property name="ElementShortName">ws_reg_dest[4:0]</obj_property>
       <obj_property name="ObjectShortName">ws_reg_dest[4:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb_top/soc_lite/cpu/id_stage/inst_jal" type="logic">
-      <obj_property name="ElementShortName">inst_jal</obj_property>
-      <obj_property name="ObjectShortName">inst_jal</obj_property>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/stallD" type="logic">
+      <obj_property name="ElementShortName">stallD</obj_property>
+      <obj_property name="ObjectShortName">stallD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/stallF" type="logic">
+      <obj_property name="ElementShortName">stallF</obj_property>
+      <obj_property name="ObjectShortName">stallF</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/forward_rs" type="array">
+      <obj_property name="ElementShortName">forward_rs[1:0]</obj_property>
+      <obj_property name="ObjectShortName">forward_rs[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/forward_rt" type="array">
+      <obj_property name="ElementShortName">forward_rt[1:0]</obj_property>
+      <obj_property name="ObjectShortName">forward_rt[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ws_forward_rs" type="logic">
+      <obj_property name="ElementShortName">ws_forward_rs</obj_property>
+      <obj_property name="ObjectShortName">ws_forward_rs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ws_forward_rt" type="logic">
+      <obj_property name="ElementShortName">ws_forward_rt</obj_property>
+      <obj_property name="ObjectShortName">ws_forward_rt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ms_forward_rs" type="logic">
+      <obj_property name="ElementShortName">ms_forward_rs</obj_property>
+      <obj_property name="ObjectShortName">ms_forward_rs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/ms_forward_rt" type="logic">
+      <obj_property name="ElementShortName">ms_forward_rt</obj_property>
+      <obj_property name="ObjectShortName">ms_forward_rt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/rs_stall" type="logic">
+      <obj_property name="ElementShortName">rs_stall</obj_property>
+      <obj_property name="ObjectShortName">rs_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/rt_stall" type="logic">
+      <obj_property name="ElementShortName">rt_stall</obj_property>
+      <obj_property name="ObjectShortName">rt_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/forward_rs" type="array">
+      <obj_property name="ElementShortName">forward_rs[1:0]</obj_property>
+      <obj_property name="ObjectShortName">forward_rs[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/hazard/forward_rt" type="array">
+      <obj_property name="ElementShortName">forward_rt[1:0]</obj_property>
+      <obj_property name="ObjectShortName">forward_rt[1:0]</obj_property>
    </wvobject>
 </wave_config>

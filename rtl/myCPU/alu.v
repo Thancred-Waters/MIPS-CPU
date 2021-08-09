@@ -2,7 +2,8 @@ module alu(
   input  [11:0] alu_op,
   input  [31:0] alu_src1,
   input  [31:0] alu_src2,
-  output [31:0] alu_result
+  output [31:0] alu_result,
+  output [31:0] mem_addr//优化时序，减少延迟
 );
 
 wire op_add;   //�ӷ�����
@@ -44,6 +45,9 @@ wire [31:0] sll_result;
 wire [63:0] sr64_result; 
 wire [31:0] sr_result; 
 
+//mem result
+//因为lw和rw的地址只可能是alu_src1+alu_src2，可以直接运算，绕开alu_result经过的多路选择器
+assign mem_addr=alu_src1+alu_src2;
 
 // 32-bit adder
 wire [31:0] adder_a;
