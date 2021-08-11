@@ -28,6 +28,7 @@ input [4:0]  rt_addr,
 input        es_write_reg,
 input [4:0]  es_reg_dest,
 input        es_read_mem,//exe阶段指令是否需要读内存
+input        alu_stall,
 input        ms_write_reg,
 input [4:0]  ms_reg_dest,
 input        ws_write_reg,
@@ -72,6 +73,6 @@ output [1:0] forward_rt
                     (es_read_mem===1'b1 && rs_addr===es_reg_dest);
     assign rt_stall=(ds_use_rt===1'b1 && rt_addr!==5'b0) &&
                     (es_read_mem===1'b1 && rt_addr===es_reg_dest);
-    assign stallD=rs_stall | rt_stall;
+    assign stallD=rs_stall | rt_stall | alu_stall;
     assign stallF=stallD;
 endmodule

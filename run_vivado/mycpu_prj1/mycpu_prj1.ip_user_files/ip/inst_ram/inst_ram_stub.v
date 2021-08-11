@@ -1,7 +1,7 @@
 // Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2021.1 (win64) Build 3247384 Thu Jun 10 19:36:33 MDT 2021
-// Date        : Sat Aug  7 21:10:04 2021
+// Date        : Tue Aug 10 11:53:52 2021
 // Host        : LAPTOP-8DNNU5PI running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode synth_stub
 //               d:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/xilinx_ip/inst_ram/inst_ram_stub.v

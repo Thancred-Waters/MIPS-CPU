@@ -41,6 +41,7 @@ wire [`BR_BUS_WD         :0] br_bus;//br_taken: 1 bit + br_target: 32 bit = 33 b
 
 wire stallD;
 wire stallF;
+wire alu_stall;
 wire [1:0] forward_rs;
 wire [1:0] forward_rt;
 wire ds_use_rs;
@@ -114,6 +115,7 @@ exe_stage exe_stage(
     //stall
     .es_write_reg   (es_write_reg   ),
     .es_reg_dest    (es_reg_dest    ),
+    .alu_stall      (alu_stall      ),
     //forward
     .es_read_mem    (es_read_mem    ),
     .es_to_ds_bus   (es_to_ds_bus   ),
@@ -182,6 +184,7 @@ hazard hazard(
     .es_write_reg(es_write_reg),
     .es_reg_dest(es_reg_dest),
     .es_read_mem(es_read_mem),
+    .alu_stall(alu_stall),
     .ms_write_reg(ms_write_reg),
     .ms_reg_dest(ms_reg_dest),
     .ws_write_reg(ws_write_reg),

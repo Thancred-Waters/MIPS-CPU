@@ -21,6 +21,8 @@ verilog xil_defaultlib  --include "../../../../../../rtl/myCPU" --include "../..
 "../../../../../../rtl/myCPU/alu.v" \
 "../../../../../../rtl/BRIDGE/bridge_1x2.v" \
 "../../../../../../rtl/CONFREG/confreg.v" \
+"../../../../mycpu_prj1.srcs/sources_1/new/div_fsm.v" \
+"../../../../mycpu_prj1.srcs/sources_1/new/divu_fsm.v" \
 "../../../../mycpu_prj1.srcs/sources_1/new/hazard.v" \
 "../../../../../../rtl/myCPU/mycpu_top.v" \
 "../../../../../../rtl/myCPU/regfile.v" \

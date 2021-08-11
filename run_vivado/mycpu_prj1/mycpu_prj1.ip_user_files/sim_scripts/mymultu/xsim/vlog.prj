@@ -1,0 +1,7 @@
+sv xpm  \
+"D:/Program_Files/vivado_2021_1/Vivado/2021.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv" \
+"D:/Program_Files/vivado_2021_1/Vivado/2021.1/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv" \
+
+verilog xil_defaultlib "glbl.v"
+
+nosort

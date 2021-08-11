@@ -6,6 +6,7 @@ module exe_stage(
     //stall
     output                         es_write_reg  ,
     output [4:0]                   es_reg_dest   ,
+    output                         alu_stall     ,
     //forward
     output                         es_read_mem   ,//是否读内存
     output [31:0]                  es_to_ds_bus  ,//alu计算结果
@@ -29,12 +30,13 @@ reg         es_valid      ;
 wire        es_ready_go   ;
 
 reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
-wire [11:0] es_alu_op     ;
+wire [19:0] es_alu_op     ;
 wire        es_load_op    ;
 wire        es_src1_is_sa ;  
 wire        es_src1_is_pc ;
 wire        es_src2_is_imm; 
 wire        es_src2_is_8  ;
+wire        es_src2_zero_extend;
 wire        es_gr_we      ;
 wire        es_mem_we     ;
 wire [ 4:0] es_dest       ;
@@ -42,12 +44,13 @@ wire [15:0] es_imm        ;
 wire [31:0] es_rs_value   ;
 wire [31:0] es_rt_value   ;
 wire [31:0] es_pc         ;
-assign {es_alu_op      ,  //135:124
-        es_load_op     ,  //123:123
-        es_src1_is_sa  ,  //122:122
-        es_src1_is_pc  ,  //121:121
-        es_src2_is_imm ,  //120:120
-        es_src2_is_8   ,  //119:119
+assign {es_alu_op      ,  //144:125
+        es_load_op     ,  //124:124
+        es_src1_is_sa  ,  //123:123
+        es_src1_is_pc  ,  //122:122
+        es_src2_is_imm ,  //121:121
+        es_src2_is_8   ,  //120:120
+        es_src2_zero_extend,//119:119
         es_gr_we       ,  //118:118 寄存器堆写使能
         es_mem_we      ,  //117:117 DRAM写使能
         es_dest        ,  //116:112 目标寄存器
@@ -80,7 +83,7 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
 assign es_read_mem  = es_res_from_mem & es_valid;
 assign es_to_ds_bus = es_alu_result;
 
-assign es_ready_go    = 1'b1;
+assign es_ready_go    = ~alu_stall;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
 always @(posedge clk) begin
@@ -99,17 +102,22 @@ end
 assign es_alu_src1 = es_src1_is_sa  ? {27'b0, es_imm[10:6]} : 
                      es_src1_is_pc  ? es_pc[31:0] :
                                       es_rs_value;
-assign es_alu_src2 = es_src2_is_imm ? {{16{es_imm[15]}}, es_imm[15:0]} : 
+assign es_alu_src2 = es_src2_is_imm ? {{16{es_imm[15] & ~es_src2_zero_extend}}, es_imm[15:0]} : 
                      es_src2_is_8   ? 32'd8 :
                                       es_rt_value;
 
+wire div_stall;
 alu u_alu(
+    .clk        (clk          ),
+    .reset      (reset        ),
     .alu_op     (es_alu_op    ),
     .alu_src1   (es_alu_src1  ),
     .alu_src2   (es_alu_src2  ),
     .alu_result (es_alu_result),
-    .mem_addr   (mem_addr     )
+    .mem_addr   (mem_addr     ),
+    .div_stall  (div_stall    )
     );
+assign alu_stall = (div_stall===1'b1) & es_valid;
 
 assign data_sram_en    = 1'b1;
 assign data_sram_wen   = es_mem_we&&es_valid ? 4'hf : 4'h0;

@@ -1,9 +1,12 @@
 module alu(
-  input  [11:0] alu_op,
+  input         clk,
+  input         reset,
+  input  [19:0] alu_op,
   input  [31:0] alu_src1,
   input  [31:0] alu_src2,
   output [31:0] alu_result,
-  output [31:0] mem_addr//优化时序，减少延迟
+  output [31:0] mem_addr,//优化时序，减少延迟,
+  output        div_stall
 );
 
 wire op_add;   //�ӷ�����
@@ -18,6 +21,14 @@ wire op_sll;   //�߼�����
 wire op_srl;   //�߼�����
 wire op_sra;   //��������
 wire op_lui;   //���������ڸ߰벿��
+wire op_mult;
+wire op_multu;
+wire op_div;
+wire op_divu;
+wire op_mfhi;
+wire op_mflo;
+wire op_mthi;
+wire op_mtlo;
 
 // control code decomposition
 assign op_add  = alu_op[ 0];
@@ -32,6 +43,14 @@ assign op_sll  = alu_op[ 8];
 assign op_srl  = alu_op[ 9];
 assign op_sra  = alu_op[10];
 assign op_lui  = alu_op[11];
+assign op_mult = alu_op[12];
+assign op_multu= alu_op[13];
+assign op_div  = alu_op[14];
+assign op_divu = alu_op[15];
+assign op_mfhi = alu_op[16];
+assign op_mflo = alu_op[17];
+assign op_mthi = alu_op[18];
+assign op_mtlo = alu_op[19];
 
 wire [31:0] add_sub_result; 
 wire [31:0] slt_result; 
@@ -44,6 +63,9 @@ wire [31:0] lui_result;
 wire [31:0] sll_result; 
 wire [63:0] sr64_result; 
 wire [31:0] sr_result; 
+wire [63:0] mult_result;
+wire [63:0] div_result;
+reg  [31:0] hi=0,lo=0;
 
 //mem result
 //因为lw和rw的地址只可能是alu_src1+alu_src2，可以直接运算，绕开alu_result经过的多路选择器
@@ -88,6 +110,116 @@ assign sr64_result = {{32{op_sra & alu_src2[31]}}, alu_src2[31:0]} >> alu_src1[4
 
 assign sr_result   = sr64_result[31:0];
 
+//mult,multu,div,divu result
+wire [63:0] mult_out;
+wire [63:0] multu_out;
+mymult mymult(
+  .a(alu_src1),
+  .b(alu_src2),
+  .p(mult_out)
+);
+mymultu mymultu(
+  .a(alu_src1),
+  .b(alu_src2),
+  .p(multu_out)
+);
+assign mult_result = {64{op_mult}} & mult_out
+                   | {64{op_multu}} & multu_out;
+
+/*
+wire src1_valid;
+wire src1_ready;
+wire src2_valid;
+wire src2_ready;
+wire res_valid;
+wire [63:0] res_data;
+
+assign src1_valid=op_div;
+assign src2_valid=op_div;
+
+mydiv div(
+  .aclk(clk),                                      // input wire aclk
+  .s_axis_divisor_tvalid(src1_valid),    // input wire s_axis_divisor_tvalid
+  .s_axis_divisor_tready(src1_ready),    // output wire s_axis_divisor_tready
+  .s_axis_divisor_tdata(alu_src1),      // input wire [31 : 0] s_axis_divisor_tdata
+  .s_axis_dividend_tvalid(src2_valid),  // input wire s_axis_dividend_tvalid
+  .s_axis_dividend_tready(src2_ready),  // output wire s_axis_dividend_tready
+  .s_axis_dividend_tdata(alu_src2),    // input wire [31 : 0] s_axis_dividend_tdata
+  .m_axis_dout_tvalid(res_valid),          // output wire m_axis_dout_tvalid
+  .m_axis_dout_tdata(res_data)            // output wire [63 : 0] m_axis_dout_tdata
+);
+
+wire src1_valid_u;
+wire src1_ready_u;
+wire src2_valid_u;
+wire src2_ready_u;
+wire res_valid_u;
+wire [63:0] res_data_u;
+
+assign src1_valid_u=op_div;
+assign src2_valid_u=op_div;
+
+mydivu divu(
+  .aclk(clk),                                      // input wire aclk
+  .s_axis_divisor_tvalid(src1_valid_u),    // input wire s_axis_divisor_tvalid
+  .s_axis_divisor_tready(src1_ready_u),    // output wire s_axis_divisor_tready
+  .s_axis_divisor_tdata(alu_src1),      // input wire [31 : 0] s_axis_divisor_tdata
+  .s_axis_dividend_tvalid(src2_valid_u),  // input wire s_axis_dividend_tvalid
+  .s_axis_dividend_tready(src2_ready_u),  // output wire s_axis_dividend_tready
+  .s_axis_dividend_tdata(alu_src2),    // input wire [31 : 0] s_axis_dividend_tdata
+  .m_axis_dout_tvalid(res_valid_u),          // output wire m_axis_dout_tvalid
+  .m_axis_dout_tdata(res_data_u)            // output wire [63 : 0] m_axis_dout_tdata
+);
+                  
+assign div_stall  = 0; //(op_div & ~res_valid) | (op_divu & ~res_valid_u);
+assign div_result[63:32] = {32{op_div}} & $signed(alu_src1)%$signed(alu_src2)
+                  | {32{op_divu}} & alu_src1%alu_src2;
+assign div_result[31:0] = {32{op_div}} & $signed(alu_src1)/$signed(alu_src2)
+                  | {32{op_divu}} & alu_src1/alu_src2;
+                  */
+
+wire div_valid,divu_valid;
+wire [63:0] div_out,divu_out;
+div_fsm div_fsm(
+  .clk(clk),
+  .reset(reset),
+  .src1(alu_src1),
+  .src2(alu_src2),
+  .data_valid(op_div),
+  .div_out(div_out),
+  .res_valid(div_valid)
+);
+divu_fsm divu_fsm(
+  .clk(clk),
+  .reset(reset),
+  .src1(alu_src1),
+  .src2(alu_src2),
+  .data_valid(op_divu),
+  .div_out(divu_out),
+  .res_valid(divu_valid)
+);
+assign div_stall  = (op_div & ~div_valid) | (op_divu & ~divu_valid);
+assign div_result[63:32] = {32{op_div}} & div_out[31:0]
+                  | {32{op_divu}} & divu_out[31:0];
+assign div_result[31:0] = {32{op_div}} & div_out[63:32]
+                  | {32{op_divu}} & divu_out[63:32];
+
+//mthi mtlo
+always @(*) begin
+  if(op_div | op_divu) begin
+    {hi,lo}=div_result;  
+  end
+  else if(op_mult | op_multu) begin
+    {hi,lo}=mult_result;
+  end
+  else if(op_mthi) begin
+    hi=alu_src1;
+  end
+  else if(op_mtlo) begin
+    lo=alu_src1;
+  end  
+end
+
 // final result mux
 assign alu_result = ({32{op_add|op_sub}} & add_sub_result)
                   | ({32{op_slt       }} & slt_result)
@@ -98,6 +230,8 @@ assign alu_result = ({32{op_add|op_sub}} & add_sub_result)
                   | ({32{op_xor       }} & xor_result)
                   | ({32{op_lui       }} & lui_result)
                   | ({32{op_sll       }} & sll_result)
-                  | ({32{op_srl|op_sra}} & sr_result);
+                  | ({32{op_srl|op_sra}} & sr_result)
+                  | ({32{op_mfhi}} & hi)
+                  | ({32{op_mflo}} & lo);
 
 endmodule
