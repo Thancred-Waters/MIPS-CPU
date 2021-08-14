@@ -16,9 +16,12 @@ module exe_stage(
     //from ds
     input                          ds_to_es_valid,
     input  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
+    input  [4:0]                   ds_load_mem_bus ,
+    input  [3:0]                   ds_save_mem_bus ,
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
+    output [6:0]                   es_load_mem_bus ,                        
     // data sram interface
     output        data_sram_en   ,
     output [ 3:0] data_sram_wen  ,
@@ -30,6 +33,18 @@ reg         es_valid      ;
 wire        es_ready_go   ;
 
 reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
+reg  [4:0]  ds_load_mem_bus_r;
+reg  [3:0]  ds_save_mem_bus_r;
+wire [1:0]  save_width    ;
+wire [1:0]  save_lr       ;
+wire [3:0]  save_lwe      ;
+wire [3:0]  save_rwe      ;
+wire [3:0]  save_bwe      ;
+wire [3:0]  save_hwe      ;
+wire [3:0]  save_we       ;
+wire [31:0] save_ldata    ;
+wire [31:0] save_rdata    ;
+wire [31:0] save_data     ;
 wire [19:0] es_alu_op     ;
 wire        es_load_op    ;
 wire        es_src1_is_sa ;  
@@ -59,6 +74,8 @@ assign {es_alu_op      ,  //144:125
         es_rt_value    ,  //63 :32
         es_pc             //31 :0
        } = ds_to_es_bus_r;
+
+assign {save_width,save_lr} = ds_save_mem_bus_r;
 
 //判断是否存在寄存器冲突
 assign es_write_reg=es_gr_we && es_valid;
@@ -95,7 +112,9 @@ always @(posedge clk) begin
     end
 
     if (ds_to_es_valid && es_allowin) begin
-        ds_to_es_bus_r <= ds_to_es_bus;
+        ds_to_es_bus_r    <= ds_to_es_bus;
+        ds_load_mem_bus_r <= ds_load_mem_bus;
+        ds_save_mem_bus_r <= ds_save_mem_bus;
     end
 end
 
@@ -119,9 +138,45 @@ alu u_alu(
     );
 assign alu_stall = (div_stall===1'b1) & es_valid;
 
+assign es_load_mem_bus = {ds_load_mem_bus_r,mem_addr[1:0]};
+
+assign save_bwe = mem_addr[1:0]==2'b00 ? 4'b0001 :
+                  mem_addr[1:0]==2'b01 ? 4'b0010 :
+                  mem_addr[1:0]==2'b10 ? 4'b0100 :
+                  mem_addr[1:0]==2'b11 ? 4'b1000 : 4'b0000;
+assign save_hwe = mem_addr[1] ? 4'b1100 : 4'b0011;
+assign save_lwe = (
+                    mem_addr[1:0]==2'b00 ? 4'b0001 :
+                    mem_addr[1:0]==2'b01 ? 4'b0011 : 
+                    mem_addr[1:0]==2'b10 ? 4'b0111 : 4'b1111
+                  ) & {4{save_lr[1]}};
+assign save_rwe = (
+                    mem_addr[1:0]==2'b00 ? 4'b1111 :
+                    mem_addr[1:0]==2'b01 ? 4'b1110 : 
+                    mem_addr[1:0]==2'b10 ? 4'b1100 : 4'b1000
+                  ) & {4{save_lr[0]}};                 
+assign save_we  = {4{save_width==2'b11}} & 4'b1111
+                | {4{save_width==2'b10}} & save_hwe
+                | {4{save_width==2'b01}} & save_bwe
+                | {4{save_width==2'b00}} & (save_lwe | save_rwe);
+assign save_ldata = (
+                     mem_addr[1:0]==2'b00 ? {24'b0,es_rt_value[31:24]}  :
+                     mem_addr[1:0]==2'b01 ? {16'b0,es_rt_value[31:16]} :
+                     mem_addr[1:0]==2'b10 ? {8'b0,es_rt_value[31:8]}  : es_rt_value
+                    ) & {32{save_lr[1]}};
+assign save_rdata = (
+                     mem_addr[1:0]==2'b00 ? es_rt_value                :
+                     mem_addr[1:0]==2'b01 ? {es_rt_value[23:0],8'b0}   :
+                     mem_addr[1:0]==2'b10 ? {es_rt_value[15:0],16'b0}  : {es_rt_value[7:0],24'b0} 
+                    ) & {32{save_lr[0]}};
+assign save_data = {32{save_width==2'b11}} & es_rt_value
+                 | {32{save_width==2'b10}} & {2{es_rt_value[15:0]}}
+                 | {32{save_width==2'b01}} & {4{es_rt_value[7:0]}}
+                 | {32{save_width==2'b00}} & {save_ldata | save_rdata};
+
 assign data_sram_en    = 1'b1;
-assign data_sram_wen   = es_mem_we&&es_valid ? 4'hf : 4'h0;
+assign data_sram_wen   = es_mem_we && es_valid ? save_we : 4'h0;
 assign data_sram_addr  = mem_addr;
-assign data_sram_wdata = es_rt_value;
+assign data_sram_wdata = save_data;
 
 endmodule

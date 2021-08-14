@@ -34,5 +34,6 @@ INFO: [VRFC 10-311] analyzing module soc_lite_top
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/tools.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module decoder_5_32
 INFO: [VRFC 10-311] analyzing module decoder_6_64
+INFO: [VRFC 10-311] analyzing module forward_data
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/testbench/mycpu_tb.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module tb_top

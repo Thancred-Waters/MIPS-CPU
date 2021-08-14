@@ -35,6 +35,9 @@ wire         ms_to_ws_valid;
 wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus;
 wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus;
 wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus;
+wire [4                  :0] ds_load_mem_bus;
+wire [6                  :0] es_load_mem_bus;
+wire [3                  :0] ds_save_mem_bus;
 wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
 wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
 wire [`BR_BUS_WD         :0] br_bus;//br_taken: 1 bit + br_target: 32 bit = 33 bit
@@ -54,7 +57,7 @@ wire       ms_write_reg;
 wire [4:0] ms_reg_dest;
 wire       ws_write_reg;
 wire [4:0] ws_reg_dest;
-wire [31:0] ms_to_ds_bus;
+wire [35:0] ms_to_ds_bus;
 wire es_read_mem;
 wire [31:0] es_to_ds_bus;
 
@@ -99,6 +102,8 @@ id_stage id_stage(
     //to es
     .ds_to_es_valid (ds_to_es_valid ),
     .ds_to_es_bus   (ds_to_es_bus   ),
+    .ds_load_mem_bus(ds_load_mem_bus),
+    .ds_save_mem_bus(ds_save_mem_bus),
     //to fs
     .br_bus         (br_bus         ),
     //to rf: for write back
@@ -125,9 +130,12 @@ exe_stage exe_stage(
     //from ds
     .ds_to_es_valid (ds_to_es_valid ),
     .ds_to_es_bus   (ds_to_es_bus   ),
+    .ds_load_mem_bus(ds_load_mem_bus),
+    .ds_save_mem_bus(ds_save_mem_bus),
     //to ms
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
+    .es_load_mem_bus(es_load_mem_bus),
     // data sram interface
     .data_sram_en   (data_sram_en   ),
     .data_sram_wen  (data_sram_wen  ),
@@ -147,6 +155,7 @@ mem_stage mem_stage(
     //from es
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
+    .es_load_mem_bus(es_load_mem_bus),
     //to ws
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),

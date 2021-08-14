@@ -12,7 +12,7 @@ module id_stage(
     //forward
     input [1:0]                    forward_rs    ,
     input [1:0]                    forward_rt    ,
-    input [31:0]                   ms_to_ds_bus  ,//mem阶段前递数据
+    input [35:0]                   ms_to_ds_bus  ,//mem阶段前递数据
     input [31:0]                   es_to_ds_bus  ,//exe阶段前递数据
     //allowin
     input                          es_allowin    ,
@@ -23,6 +23,8 @@ module id_stage(
     //to es
     output                         ds_to_es_valid,
     output [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
+    output [4:0]                   ds_load_mem_bus,
+    output [3:0]                   ds_save_mem_bus,
     //to fs
     output [`BR_BUS_WD         :0] br_bus        ,
     //to rf: for write back
@@ -41,13 +43,19 @@ wire [31:0] ds_pc  ;
 assign {ds_inst,
         ds_pc  } = fs_to_ds_bus_r;
 
-wire        rf_we   ;
+wire [ 3:0] rf_we   ;
 wire [ 4:0] rf_waddr;
 wire [31:0] rf_wdata;
-assign {rf_we   ,  //37:37 寄存器堆写使能
+assign {rf_we   ,  //40:37 寄存器堆写使能
         rf_waddr,  //36:32 写地址
         rf_wdata   //31:0  写数据
        } = ws_to_rf_bus;//write back阶段写回总线
+
+wire [ 3:0] ms_rf_we;
+wire [31:0] ms_rf_wdata;
+assign {ms_rf_wdata ,
+        ms_rf_we
+       } = ms_to_ds_bus;
 
 wire        br_taken;
 wire [31:0] br_target;
@@ -113,18 +121,40 @@ wire        inst_srav;
 wire        inst_addi;
 wire        inst_addiu;
 wire        inst_lui;
+wire        inst_lb;
+wire        inst_lbu;
+wire        inst_lh;
+wire        inst_lhu;
 wire        inst_lw;
+wire        inst_lwl;
+wire        inst_lwr;
 wire        inst_sw;
+wire        inst_sb;
+wire        inst_sh;
+wire        inst_swl;
+wire        inst_swr;
 wire        inst_beq;
 wire        inst_bne;
 wire        inst_bgtz;
 wire        inst_bgez;
 wire        inst_blez;
 wire        inst_bltz;
+wire        inst_bgezal;
+wire        inst_bltzal;
 wire        inst_jal;
 wire        inst_jr;
+wire        inst_j;
+wire        inst_jalr;
 
 wire        branch_zero;
+
+wire [1:0]  load_width;
+wire        load_sign;
+wire        load_lr;
+
+wire        save_op;
+wire [3:0]  save_width;
+wire [1:0]  save_lr;
 
 wire        dst_is_r31;  
 wire        dst_is_rt;   
@@ -140,7 +170,7 @@ wire        rs_lt_z;
 
 assign br_bus       = {br_taken,br_target};
 
-assign ds_to_es_bus = {alu_op      ,  //140:125
+assign ds_to_es_bus = {alu_op      ,  //144:125
                        load_op     ,  //124:124
                        src1_is_sa  ,  //123:123
                        src1_is_pc  ,  //122:122
@@ -220,18 +250,32 @@ assign inst_andi   = op_d[6'h0c];
 assign inst_ori    = op_d[6'h0d];
 assign inst_xori   = op_d[6'h0e];
 assign inst_lui    = op_d[6'h0f] & rs_d[5'h00];
+assign inst_lb     = op_d[6'h20];
+assign inst_lbu    = op_d[6'h24];
+assign inst_lh     = op_d[6'h21];
+assign inst_lhu    = op_d[6'h25];
 assign inst_lw     = op_d[6'h23];
+assign inst_lwl    = op_d[6'h22];
+assign inst_lwr    = op_d[6'h26];
 assign inst_sw     = op_d[6'h2b];
+assign inst_sb     = op_d[6'h28];
+assign inst_sh     = op_d[6'h29];
+assign inst_swl    = op_d[6'h2a];
+assign inst_swr    = op_d[6'h2e];
 assign inst_beq    = op_d[6'h04];
 assign inst_bne    = op_d[6'h05];
 assign inst_bgez   = op_d[6'h01] & rt_d[5'h01];
 assign inst_bgtz   = op_d[6'h07] & rt_d[5'h00];
 assign inst_blez   = op_d[6'h06] & rt_d[5'h00];
 assign inst_bltz   = op_d[6'h01] & rt_d[5'h00];
+assign inst_bgezal = op_d[6'h01] & rt_d[5'h11];
+assign inst_bltzal = op_d[6'h01] & rt_d[5'h10];
 assign inst_jal    = op_d[6'h03];
 assign inst_jr     = op_d[6'h00] & func_d[6'h08] & rt_d[5'h00] & rd_d[5'h00] & sa_d[5'h00];
+assign inst_j      = op_d[6'h02];
+assign inst_jalr   = op_d[6'h00] & func_d[6'h09] & rt_d[5'h00] & sa_d[5'h00];
 
-assign alu_op[ 0] = inst_add | inst_addu | inst_addi | inst_addiu | inst_lw | inst_sw | inst_jal;//add
+assign alu_op[ 0] = inst_add | inst_addu | inst_addi | inst_addiu | load_op | save_op | inst_jal | inst_bgezal | inst_bltzal | inst_jalr;//add
 assign alu_op[ 1] = inst_sub | inst_subu;//sub
 assign alu_op[ 2] = inst_slt | inst_slti;//slt
 assign alu_op[ 3] = inst_sltu | inst_sltiu;//sltu
@@ -252,23 +296,46 @@ assign alu_op[17] = inst_mflo;
 assign alu_op[18] = inst_mthi;
 assign alu_op[19] = inst_mtlo;
 
-assign branch_zero  = inst_bgez | inst_bgtz | inst_blez | inst_bltz;
+//load op
+assign load_op      = inst_lw | inst_lb | inst_lbu | inst_lh | inst_lhu | load_lr;//是否从内存中获取数据
+assign load_width   = {2{inst_lb | inst_lbu}} & 2'b01 
+                    | {2{inst_lh | inst_lhu}} & 2'b10
+                    | {2{inst_lw | load_lr}} & 2'b11;
+assign load_sign    = inst_lb | inst_lh;
+assign load_lr      = inst_lwl | inst_lwr;
+assign ds_load_mem_bus = {load_width,load_sign,inst_lwl,inst_lwr};
+//load op
+
+//save op
+assign save_op      = inst_sw | inst_sb | inst_sh | inst_swl | inst_swr;
+assign save_width   = {2{inst_sw}} & 2'b11
+                    | {2{inst_sh}} & 2'b10
+                    | {2{inst_sb}} & 2'b01;
+                    //default: swl swr -> 2'b00
+assign save_lr      = {inst_swl,inst_swr}; 
+assign ds_save_mem_bus = {save_width,save_lr};
+//save op
+
+assign branch_zero  = inst_bgez | inst_bgtz | inst_blez | inst_bltz | inst_bgezal | inst_bltzal;
+//需要与0比较的跳转信号
 assign src1_is_sa   = inst_sll   | inst_srl | inst_sra;
-assign src1_is_pc   = inst_jal;
-assign ds_use_rs    = ~(src1_is_sa | src1_is_pc) & ds_valid;
+assign src1_is_pc   = inst_jal | inst_bgezal | inst_bltzal | inst_jalr;
+assign ds_use_rs    = (~(src1_is_sa | src1_is_pc | inst_j) | inst_bgezal | inst_bltzal | inst_jalr) & ds_valid;
+//需要用到rs寄存器
 assign rs_addr      = rs;
-assign src2_is_imm  = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | inst_lw | inst_sw;
-assign src2_is_8    = inst_jal;
+assign src2_is_imm  = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | load_op | save_op;
+assign src2_is_8    = inst_jal | inst_bgezal | inst_bltzal | inst_jalr;
 assign src2_zero_extend = inst_andi | inst_ori | inst_xori;
-assign ds_use_rt    = (~(src2_is_imm | src2_is_8 | inst_mthi | inst_mtlo | branch_zero) | inst_sw) & ds_valid;
+assign ds_use_rt    = (~(src2_is_imm | src2_is_8 | inst_mthi | inst_mtlo | branch_zero | inst_j) | save_op) & ds_valid;
 //sw需要将rt中的值写入内存，因此也需要检查写后读相关
 assign rt_addr      = rt;
-assign res_from_mem = inst_lw;
-assign dst_is_r31   = inst_jal;
-assign dst_is_rt    = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | inst_lw;
-assign gr_we        = ~inst_sw & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero;
-assign mem_we       = inst_sw;
-assign load_op      = inst_lw;//是否从内存中获取数据
+assign res_from_mem = load_op;
+assign dst_is_r31   = inst_jal | inst_bgezal | inst_bltzal;
+assign dst_is_rt    = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | load_op;
+//需要用到rt寄存器
+assign gr_we        = (~save_op & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero & ~inst_j) | (inst_bgezal | inst_bltzal);
+//寄存器写使能
+assign mem_we       = save_op;
 
 assign dest         = dst_is_r31 ? 5'd31 :
                       dst_is_rt  ? rt    : 
@@ -287,29 +354,48 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
+//data forward
+wire [31:0] ms_forward_data;
+wire [31:0] ws_forward_data;
+forward_data ms_forward(
+    .a   (ms_rf_wdata)    ,
+    .b   (rf_rdata1)      ,
+    .we  (ms_rf_we)       ,
+    .out (ms_forward_data)
+);
+forward_data ws_forward(
+    .a   (rf_wdata)       ,
+    .b   (rf_rdata2)      ,
+    .we  (rf_we)          ,
+    .out (ws_forward_data)
+);
+
 assign rs_value = {32{forward_rs==2'b11}} & es_to_ds_bus
-                | {32{forward_rs==2'b10}} & ms_to_ds_bus 
-                | {32{forward_rs==2'b01}} & rf_wdata
+                | {32{forward_rs==2'b10}} & ms_forward_data 
+                | {32{forward_rs==2'b01}} & ws_forward_data
                 | {32{forward_rs==2'b00}} & rf_rdata1;//mux 根据冲突情况选择数据源
 assign rt_value = {32{forward_rt==2'b11}} & es_to_ds_bus
-                | {32{forward_rt==2'b10}} & ms_to_ds_bus 
-                | {32{forward_rt==2'b01}} & rf_wdata
+                | {32{forward_rt==2'b10}} & ms_forward_data 
+                | {32{forward_rt==2'b01}} & ws_forward_data
                 | {32{forward_rt==2'b00}} & rf_rdata2;
+//data forward
 
 assign rs_eq_rt = (rs_value == rt_value);
 assign rs_gt_z  = ($signed(rs_value) > 0);
 assign rs_lt_z  = ($signed(rs_value) < 0);
 assign br_taken = (   inst_beq  &&  rs_eq_rt
-                   || inst_bne  && !rs_eq_rt
+                   || inst_bne  && !rs_eq_rt 
                    || inst_bgtz && rs_gt_z
-                   || inst_bgez && !rs_lt_z
-                   || inst_bltz && rs_lt_z
+                   || (inst_bgez || inst_bgezal) && !rs_lt_z
+                   || (inst_bltz || inst_bltzal) && rs_lt_z
                    || inst_blez && !rs_gt_z
                    || inst_jal
                    || inst_jr
+                   || inst_j
+                   || inst_jalr
                   ) && ds_valid;
 assign br_target = (inst_beq || inst_bne || branch_zero) ? (fs_pc + {{14{imm[15]}}, imm[15:0], 2'b0}) :
-                   (inst_jr)              ? rs_value :
-                   {fs_pc[31:28], jidx[25:0], 2'b0};
+                   (inst_jr || inst_jalr)                ? rs_value :
+                   {fs_pc[31:28], jidx[25:0], 2'b0};// j & jal
 
 endmodule
