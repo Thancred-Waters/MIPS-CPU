@@ -35,15 +35,20 @@ wire         ms_to_ws_valid;
 wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus;
 wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus;
 wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus;
+wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
+wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
+wire [`FS_EX_BUS_WD    -1:0] fs_ex_bus;
+wire [`DS_EX_BUS_WD    -1:0] ds_ex_bus;
+wire [`ES_EX_BUS_WD    -1:0] es_ex_bus;
+wire [`MS_EX_BUS_WD    -1:0] ms_ex_bus;
 wire [4                  :0] ds_load_mem_bus;
 wire [6                  :0] es_load_mem_bus;
 wire [3                  :0] ds_save_mem_bus;
-wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
-wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
 wire [`BR_BUS_WD         :0] br_bus;//br_taken: 1 bit + br_target: 32 bit = 33 bit
 
 wire stallD;
 wire stallF;
+wire stallE;
 wire alu_stall;
 wire [1:0] forward_rs;
 wire [1:0] forward_rt;
@@ -60,6 +65,27 @@ wire [4:0] ws_reg_dest;
 wire [35:0] ms_to_ds_bus;
 wire es_read_mem;
 wire [31:0] es_to_ds_bus;
+//cp0
+wire  [ 3:0] c0_exception;
+wire  [ 4:0] c0_addr;
+wire  [31:0] c0_wdata;
+wire         c0_wb_valid;
+wire         c0_wb_bd;
+wire  [31:0] c0_wb_pc;
+wire         c0_valid;
+wire  [31:0] c0_res;
+wire  [31:0] eret_pc;
+wire         eret_flush;
+wire         ex_flush;
+wire         flush;
+wire         ms_mfc0_stall;
+wire         es_mfc0_stall;
+//exception
+wire es_ex;
+wire ms_ex;
+wire ws_ex;
+
+assign flush = eret_flush | ex_flush;
 
 // IF stage
 if_stage if_stage(
@@ -73,6 +99,11 @@ if_stage if_stage(
     //outputs
     .fs_to_ds_valid (fs_to_ds_valid ),
     .fs_to_ds_bus   (fs_to_ds_bus   ),
+    .fs_ex_bus      (fs_ex_bus      ),
+    //from cp0
+    .ex_flush(ex_flush),
+    .eret_flush(eret_flush),
+    .eret_pc(eret_pc),
     // inst sram interface
     .inst_sram_en   (inst_sram_en   ),
     .inst_sram_wen  (inst_sram_wen  ),
@@ -99,13 +130,17 @@ id_stage id_stage(
     //from fs
     .fs_to_ds_valid (fs_to_ds_valid ),
     .fs_to_ds_bus   (fs_to_ds_bus   ),
+    .fs_ex_bus      (fs_ex_bus      ),
     //to es
     .ds_to_es_valid (ds_to_es_valid ),
     .ds_to_es_bus   (ds_to_es_bus   ),
     .ds_load_mem_bus(ds_load_mem_bus),
     .ds_save_mem_bus(ds_save_mem_bus),
+    .ds_ex_bus      (ds_ex_bus      ),
     //to fs
     .br_bus         (br_bus         ),
+    //from cp0
+    .flush          (flush          ),
     //to rf: for write back
     .ws_to_rf_bus   (ws_to_rf_bus   ),
     //from ms
@@ -121,6 +156,8 @@ exe_stage exe_stage(
     .es_write_reg   (es_write_reg   ),
     .es_reg_dest    (es_reg_dest    ),
     .alu_stall      (alu_stall      ),
+    .es_mfc0_stall  (es_mfc0_stall  ),
+    .stallE         (stallE         ),
     //forward
     .es_read_mem    (es_read_mem    ),
     .es_to_ds_bus   (es_to_ds_bus   ),
@@ -132,10 +169,18 @@ exe_stage exe_stage(
     .ds_to_es_bus   (ds_to_es_bus   ),
     .ds_load_mem_bus(ds_load_mem_bus),
     .ds_save_mem_bus(ds_save_mem_bus),
+    .ds_ex_bus      (ds_ex_bus      ),
     //to ms
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
     .es_load_mem_bus(es_load_mem_bus),
+    .es_ex_bus      (es_ex_bus      ),
+    //from cp0
+    .flush          (flush          ),
+    //exception
+    .es_ex          (es_ex          ),
+    .ms_ex          (ms_ex          ),
+    .ws_ex          (ws_ex          ),
     // data sram interface
     .data_sram_en   (data_sram_en   ),
     .data_sram_wen  (data_sram_wen  ),
@@ -149,6 +194,7 @@ mem_stage mem_stage(
     //stall
     .ms_write_reg   (ms_write_reg   ),
     .ms_reg_dest    (ms_reg_dest    ),
+    .ms_mfc0_stall  (ms_mfc0_stall  ),
     //allowin
     .ws_allowin     (ws_allowin     ),
     .ms_allowin     (ms_allowin     ),
@@ -156,13 +202,19 @@ mem_stage mem_stage(
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
     .es_load_mem_bus(es_load_mem_bus),
+    .es_ex_bus      (es_ex_bus      ),
     //to ws
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
+    .ms_ex_bus      (ms_ex_bus      ),
+    //from cp0
+    .flush          (flush          ),
     //from data-sram
     .data_sram_rdata(data_sram_rdata),
     //to ds
-    .ms_to_ds_bus   (ms_to_ds_bus   )
+    .ms_to_ds_bus   (ms_to_ds_bus   ),
+    //to es
+    .ms_ex          (ms_ex          )
 );
 // WB stage
 wb_stage wb_stage(
@@ -176,13 +228,45 @@ wb_stage wb_stage(
     //from ms
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
+    .ms_ex_bus      (ms_ex_bus      ),
     //to rf: for write back
     .ws_to_rf_bus   (ws_to_rf_bus   ),
+    //to cp0
+    .c0_exception   (c0_exception   ),
+    .c0_addr        (c0_addr        ),
+    .c0_wdata       (c0_wdata       ),
+    .c0_wb_valid    (c0_wb_valid    ),
+    .c0_wb_bd       (c0_wb_bd       ),
+    .c0_wb_pc       (c0_wb_pc       ),
+    //from cp0
+    .c0_valid(c0_valid),
+    .c0_res(c0_res),
+    .flush(flush),
+    //to es
+    .ws_ex          (ws_ex          ),
     //trace debug interface
     .debug_wb_pc      (debug_wb_pc      ),
     .debug_wb_rf_wen  (debug_wb_rf_wen  ),
     .debug_wb_rf_wnum (debug_wb_rf_wnum ),
     .debug_wb_rf_wdata(debug_wb_rf_wdata)
+);
+
+cp0_reg cp0(
+//input
+    .clk(clk),
+    .reset(reset),
+    .exception(c0_exception),
+    .c0_addr(c0_addr),
+    .c0_wdata(c0_wdata),
+    .wb_valid(c0_wb_valid),
+    .wb_bd(c0_wb_bd),
+    .wb_pc(c0_wb_pc),
+//output
+    .c0_valid(c0_valid),
+    .c0_res(c0_res),
+    .eret_pc(eret_pc),
+    .eret_flush(eret_flush),
+    .ex_flush(ex_flush)
 );
 
 hazard hazard(
@@ -193,14 +277,21 @@ hazard hazard(
     .es_write_reg(es_write_reg),
     .es_reg_dest(es_reg_dest),
     .es_read_mem(es_read_mem),
+    .es_mfc0(es_mfc0_stall),
     .alu_stall(alu_stall),
     .ms_write_reg(ms_write_reg),
     .ms_reg_dest(ms_reg_dest),
+    .ms_mfc0(ms_mfc0_stall),
     .ws_write_reg(ws_write_reg),
     .ws_reg_dest(ws_reg_dest),
+    //exception
+    .es_ex(es_ex),
+    .ms_ex(ms_ex),
+    .ws_ex(ws_ex),
     //stall
     .stallD(stallD),
     .stallF(stallF),
+    .stallE(stallE),
     //forward
     .forward_rs(forward_rs),
     .forward_rt(forward_rt)

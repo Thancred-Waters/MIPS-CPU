@@ -7,6 +7,8 @@ module exe_stage(
     output                         es_write_reg  ,
     output [4:0]                   es_reg_dest   ,
     output                         alu_stall     ,
+    output                         es_mfc0_stall ,
+    input                          stallE        ,
     //forward
     output                         es_read_mem   ,//是否读内存
     output [31:0]                  es_to_ds_bus  ,//alu计算结果
@@ -18,10 +20,18 @@ module exe_stage(
     input  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
     input  [4:0]                   ds_load_mem_bus ,
     input  [3:0]                   ds_save_mem_bus ,
+    input  [`DS_EX_BUS_WD    -1:0] ds_ex_bus     ,
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
-    output [6:0]                   es_load_mem_bus ,                        
+    output [6:0]                   es_load_mem_bus ,
+    output [`ES_EX_BUS_WD    -1:0] es_ex_bus     , 
+    //from cp0
+    input                          flush         ,     
+    // exception
+    output                         es_ex         ,
+    input                          ms_ex         ,
+    input                          ws_ex         ,                  
     // data sram interface
     output        data_sram_en   ,
     output [ 3:0] data_sram_wen  ,
@@ -33,6 +43,7 @@ reg         es_valid      ;
 wire        es_ready_go   ;
 
 reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
+reg  [`DS_EX_BUS_WD    -1:0] ds_ex_bus_r;
 reg  [4:0]  ds_load_mem_bus_r;
 reg  [3:0]  ds_save_mem_bus_r;
 wire [1:0]  save_width    ;
@@ -45,6 +56,7 @@ wire [3:0]  save_we       ;
 wire [31:0] save_ldata    ;
 wire [31:0] save_rdata    ;
 wire [31:0] save_data     ;
+
 wire [19:0] es_alu_op     ;
 wire        es_load_op    ;
 wire        es_src1_is_sa ;  
@@ -77,6 +89,26 @@ assign {es_alu_op      ,  //144:125
 
 assign {save_width,save_lr} = ds_save_mem_bus_r;
 
+//exception
+wire       es_bd;
+wire       es_sys;
+wire       es_mtc0;
+wire       es_eret;
+wire [4:0] es_addr;
+assign {es_bd   ,
+        es_sys  ,
+        es_mfc0 ,
+        es_mtc0 ,
+        es_eret ,
+        es_addr
+       } = ds_ex_bus_r; 
+assign es_ex_bus = ds_ex_bus_r;
+assign es_mfc0_stall = es_mfc0 && es_valid;
+assign es_ex     = (es_sys | es_eret) & es_valid;
+
+wire   ex_stop;
+assign ex_stop = ms_ex | ws_ex;
+
 //判断是否存在寄存器冲突
 assign es_write_reg=es_gr_we && es_valid;
 assign es_reg_dest=es_dest;
@@ -100,11 +132,14 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
 assign es_read_mem  = es_res_from_mem & es_valid;
 assign es_to_ds_bus = es_alu_result;
 
-assign es_ready_go    = ~alu_stall;
+assign es_ready_go    = ~stallE;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
 always @(posedge clk) begin
     if (reset) begin
+        es_valid <= 1'b0;
+    end
+    else if (flush) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin
@@ -113,6 +148,7 @@ always @(posedge clk) begin
 
     if (ds_to_es_valid && es_allowin) begin
         ds_to_es_bus_r    <= ds_to_es_bus;
+        ds_ex_bus_r       <= ds_ex_bus;
         ds_load_mem_bus_r <= ds_load_mem_bus;
         ds_save_mem_bus_r <= ds_save_mem_bus;
     end
@@ -129,6 +165,9 @@ wire div_stall;
 alu u_alu(
     .clk        (clk          ),
     .reset      (reset        ),
+    .flush      (flush        ),
+    .es_mtc0    (es_mtc0      ),
+    .ex_stop    (ex_stop      ),
     .alu_op     (es_alu_op    ),
     .alu_src1   (es_alu_src1  ),
     .alu_src2   (es_alu_src2  ),
@@ -175,7 +214,7 @@ assign save_data = {32{save_width==2'b11}} & es_rt_value
                  | {32{save_width==2'b00}} & {save_ldata | save_rdata};
 
 assign data_sram_en    = 1'b1;
-assign data_sram_wen   = es_mem_we && es_valid ? save_we : 4'h0;
+assign data_sram_wen   = es_mem_we && es_valid && ~ex_stop ? save_we : 4'h0;
 assign data_sram_addr  = mem_addr;
 assign data_sram_wdata = save_data;
 

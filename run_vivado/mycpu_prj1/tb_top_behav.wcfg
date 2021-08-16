@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,626,032.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,627,299.001 ns"></ZoomEndTime>
-      <Cursor1Time time="1,627,087.000 ns"></Cursor1Time>
+      <ZoomStartTime time="1,642,407.018 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,642,535.219 ns"></ZoomEndTime>
+      <Cursor1Time time="1,642,475.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="424"></NameColumnWidth>
-      <ValueColumnWidth column_width="177"></ValueColumnWidth>
+      <ValueColumnWidth column_width="162"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="85" />
+   <WVObjectSize size="93" />
    <wvobject fp_name="/tb_top/resetn" type="logic">
       <obj_property name="ElementShortName">resetn</obj_property>
       <obj_property name="ObjectShortName">resetn</obj_property>
@@ -67,6 +67,10 @@
    <wvobject fp_name="/tb_top/soc_clk" type="logic">
       <obj_property name="ElementShortName">soc_clk</obj_property>
       <obj_property name="ObjectShortName">soc_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/if_stage/ex_flush" type="logic">
+      <obj_property name="ElementShortName">ex_flush</obj_property>
+      <obj_property name="ObjectShortName">ex_flush</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_top/debug_wb_pc" type="array">
       <obj_property name="ElementShortName">debug_wb_pc[31:0]</obj_property>
@@ -209,8 +213,8 @@
       <obj_property name="ObjectShortName">br_taken</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_top/soc_lite/cpu/if_stage/br_bus" type="array">
-      <obj_property name="ElementShortName">br_bus[32:0]</obj_property>
-      <obj_property name="ObjectShortName">br_bus[32:0]</obj_property>
+      <obj_property name="ElementShortName">br_bus[33:0]</obj_property>
+      <obj_property name="ObjectShortName">br_bus[33:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_top/soc_lite/cpu/if_stage/fs_to_ds_bus" type="array">
       <obj_property name="ElementShortName">fs_to_ds_bus[63:0]</obj_property>
@@ -359,5 +363,33 @@
    <wvobject fp_name="/tb_top/soc_lite/cpu/id_stage/inst_sb" type="logic">
       <obj_property name="ElementShortName">inst_sb</obj_property>
       <obj_property name="ObjectShortName">inst_sb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/exe_stage/u_alu/alu_result" type="array">
+      <obj_property name="ElementShortName">alu_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">alu_result[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/mem_stage/ms_final_result" type="array">
+      <obj_property name="ElementShortName">ms_final_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ms_final_result[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/wb_stage/ws_final_result" type="array">
+      <obj_property name="ElementShortName">ws_final_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ws_final_result[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/cp0/c0_valid" type="logic">
+      <obj_property name="ElementShortName">c0_valid</obj_property>
+      <obj_property name="ObjectShortName">c0_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/cp0/c0_compare" type="array">
+      <obj_property name="ElementShortName">c0_compare[31:0]</obj_property>
+      <obj_property name="ObjectShortName">c0_compare[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/cp0/mtc0_we" type="logic">
+      <obj_property name="ElementShortName">mtc0_we</obj_property>
+      <obj_property name="ObjectShortName">mtc0_we</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_top/soc_lite/cpu/cp0/c0_addr" type="array">
+      <obj_property name="ElementShortName">c0_addr[4:0]</obj_property>
+      <obj_property name="ObjectShortName">c0_addr[4:0]</obj_property>
    </wvobject>
 </wave_config>

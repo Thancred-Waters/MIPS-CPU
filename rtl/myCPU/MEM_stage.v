@@ -6,6 +6,7 @@ module mem_stage(
     //stall
     output                         ms_write_reg  ,
     output [4:0]                   ms_reg_dest   ,
+    output                         ms_mfc0_stall ,
     //allowin
     input                          ws_allowin    ,
     output                         ms_allowin    ,
@@ -13,19 +14,26 @@ module mem_stage(
     input                          es_to_ms_valid,
     input  [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
     input  [6:0]                   es_load_mem_bus,
+    input  [`ES_EX_BUS_WD    -1:0] es_ex_bus     ,
     //to ws
     output                         ms_to_ws_valid,
     output [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus  ,
+    output [`MS_EX_BUS_WD    -1:0] ms_ex_bus     ,
+    //from cp0
+    input                          flush         ,
     //from data-sram
     input  [31                 :0] data_sram_rdata,
     //forward: to ds
-    output [35:0]                  ms_to_ds_bus
+    output [35:0]                  ms_to_ds_bus  ,
+    //eret
+    output                         ms_ex
 );
 
 reg         ms_valid;
 wire        ms_ready_go;
 
 reg [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus_r;
+reg [`ES_EX_BUS_WD    -1:0] es_ex_bus_r;
 reg [6:0] es_load_mem_bus_r;
 wire        ms_res_from_mem;
 wire        ms_gr_we;
@@ -38,6 +46,23 @@ assign {ms_res_from_mem,  //70:70 是否来自内存
         ms_alu_result  ,  //63:32 运算结果
         ms_pc             //31:0 pc
        } = es_to_ms_bus_r;
+
+//exception
+wire       ms_bd;
+wire       ms_sys;
+wire       ms_mtc0;
+wire       ms_eret;
+wire [4:0] ms_addr;
+assign {ms_bd   ,
+        ms_sys  ,
+        ms_mfc0 ,
+        ms_mtc0 ,
+        ms_eret ,
+        ms_addr
+       } = es_ex_bus_r; 
+assign ms_ex = (ms_eret | ms_sys) && ms_valid;
+assign ms_mfc0_stall = ms_mfc0 && ms_valid;
+assign ms_ex_bus = es_ex_bus_r;
 
 //load-type inst
 wire [1:0] load_width;
@@ -89,13 +114,17 @@ always @(posedge clk) begin
     if (reset) begin
         ms_valid <= 1'b0;
     end
+    else if (flush) begin
+        ms_valid <= 1'b0;
+    end
     else if (ms_allowin) begin
         ms_valid <= es_to_ms_valid;
     end
 
     if (es_to_ms_valid && ms_allowin) begin
-        es_to_ms_bus_r  = es_to_ms_bus;
-        es_load_mem_bus_r = es_load_mem_bus;
+        es_to_ms_bus_r    <= es_to_ms_bus;
+        es_load_mem_bus_r <= es_load_mem_bus;
+        es_ex_bus_r       <= es_ex_bus;
     end
 end
 

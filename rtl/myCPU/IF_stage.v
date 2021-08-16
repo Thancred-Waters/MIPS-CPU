@@ -12,6 +12,11 @@ module if_stage(
     //to ds
     output                         fs_to_ds_valid ,
     output [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus   ,
+    output [`FS_EX_BUS_WD    -1:0] fs_ex_bus      ,
+    //from cp0
+    input                          ex_flush       ,
+    input                          eret_flush     ,
+    input  [31:0]                  eret_pc        ,
     // inst sram interface
     output        inst_sram_en   ,
     output [ 3:0] inst_sram_wen  ,
@@ -28,8 +33,10 @@ wire        to_fs_valid;
 wire [31:0] seq_pc;
 wire [31:0] nextpc;
 
+wire         is_branch;//当前指令是否转移延迟槽指令
 wire         br_taken;//是否选择将nextpc置为跳转地址
 wire [ 31:0] br_target;//pc跳转目标
+assign is_branch = br_bus[33];
 assign br_taken = br_bus[32];
 assign br_target = br_bus[31:0];
 
@@ -37,11 +44,14 @@ wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
 assign fs_to_ds_bus = {fs_inst ,
                        fs_pc   };
+assign fs_ex_bus    = {is_branch};
 
 // pre-IF stage
 assign to_fs_valid  = ~reset;
 assign seq_pc       = fs_pc + 3'h4;//pc+4
-assign nextpc       = br_taken===1'b1 ? br_target : seq_pc; 
+assign nextpc       = ex_flush===1'b1   ? 32'hbfc00380 :
+                      eret_flush===1'b1 ? eret_pc :
+                      br_taken===1'b1   ? br_target : seq_pc; 
 
 // IF stage
 assign fs_ready_go    = ~stallF;//stall信号，控制流水线暂停

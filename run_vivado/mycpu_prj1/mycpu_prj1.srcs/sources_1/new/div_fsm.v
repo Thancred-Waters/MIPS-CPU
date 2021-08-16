@@ -23,6 +23,7 @@
 module div_fsm(
 input clk,
 input reset,
+input flush,
 input [31:0] src1,
 input [31:0] src2,
 input data_valid,
@@ -37,6 +38,7 @@ output res_valid
 
     always @(posedge clk) begin
         if(reset) state<=IDLE;
+        else if(flush) state<=IDLE;
         else state<=next_state;
     end
 

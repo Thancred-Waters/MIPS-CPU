@@ -1,6 +1,9 @@
 module alu(
   input         clk,
   input         reset,
+  input         flush,
+  input         es_mtc0,
+  input         ex_stop,
   input  [19:0] alu_op,
   input  [31:0] alu_src1,
   input  [31:0] alu_src2,
@@ -183,6 +186,7 @@ wire [63:0] div_out,divu_out;
 div_fsm div_fsm(
   .clk(clk),
   .reset(reset),
+  .flush(flush),
   .src1(alu_src1),
   .src2(alu_src2),
   .data_valid(op_div),
@@ -192,6 +196,7 @@ div_fsm div_fsm(
 divu_fsm divu_fsm(
   .clk(clk),
   .reset(reset),
+  .flush(flush),
   .src1(alu_src1),
   .src2(alu_src2),
   .data_valid(op_divu),
@@ -206,7 +211,10 @@ assign div_result[31:0] = {32{op_div}} & div_out[63:32]
 
 //mthi mtlo
 always @(*) begin
-  if(op_div | op_divu) begin
+  if(ex_stop) begin
+    {hi,lo}={hi,lo};
+  end
+  else if(op_div | op_divu) begin
     {hi,lo}=div_result;  
   end
   else if(op_mult | op_multu) begin
@@ -232,6 +240,7 @@ assign alu_result = ({32{op_add|op_sub}} & add_sub_result)
                   | ({32{op_sll       }} & sll_result)
                   | ({32{op_srl|op_sra}} & sr_result)
                   | ({32{op_mfhi}} & hi)
-                  | ({32{op_mflo}} & lo);
+                  | ({32{op_mflo}} & lo)
+                  | ({32{es_mtc0}} & alu_src2);
 
 endmodule

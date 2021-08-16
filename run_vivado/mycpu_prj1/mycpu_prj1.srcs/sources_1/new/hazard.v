@@ -21,6 +21,7 @@
 
 
 module hazard(
+//input
 input        ds_use_rs,
 input [4:0]  rs_addr,
 input        ds_use_rt,
@@ -28,13 +29,21 @@ input [4:0]  rt_addr,
 input        es_write_reg,
 input [4:0]  es_reg_dest,
 input        es_read_mem,//exe阶段指令是否需要读内存
+input        es_mfc0,
 input        alu_stall,
 input        ms_write_reg,
 input [4:0]  ms_reg_dest,
+input        ms_mfc0,
 input        ws_write_reg,
 input [4:0]  ws_reg_dest,
+//exception
+input        es_ex,
+input        ms_ex,
+input        ws_ex,
+//output
 output       stallD,
 output       stallF,
+output       stallE,
 output [1:0] forward_rs,
 output [1:0] forward_rt
     );
@@ -46,15 +55,15 @@ output [1:0] forward_rt
                          (ws_write_reg===1'b1 && rt_addr===ws_reg_dest);
 
     wire ms_forward_rs,ms_forward_rt;
-    assign ms_forward_rs=(ds_use_rs===1'b1 && rs_addr!==5'b0) &&
+    assign ms_forward_rs=(ds_use_rs===1'b1 && rs_addr!==5'b0 && ms_mfc0==1'b0) &&
                          (ms_write_reg===1'b1 && rs_addr===ms_reg_dest);
-    assign ms_forward_rt=(ds_use_rt===1'b1 && rt_addr!==5'b0) && 
+    assign ms_forward_rt=(ds_use_rt===1'b1 && rt_addr!==5'b0 && ms_mfc0==1'b0) && 
                          (ms_write_reg===1'b1 && rt_addr===ms_reg_dest);
 
     wire es_forward_rs,es_forward_rt;
-    assign es_forward_rs=(ds_use_rs===1'b1 && rs_addr!==5'b0) &&
+    assign es_forward_rs=(ds_use_rs===1'b1 && rs_addr!==5'b0 && es_mfc0===1'b0) &&
                          (es_write_reg===1'b1 && es_read_mem===1'b0 && rs_addr===es_reg_dest);
-    assign es_forward_rt=(ds_use_rt===1'b1 && rt_addr!==5'b0) &&
+    assign es_forward_rt=(ds_use_rt===1'b1 && rt_addr!==5'b0 && es_mfc0===1'b0) &&
                          (es_write_reg===1'b1 && es_read_mem===1'b0 && rt_addr===es_reg_dest);                    
 
 
@@ -70,9 +79,14 @@ output [1:0] forward_rt
     //data stall
     wire rs_stall,rt_stall;
     assign rs_stall=(ds_use_rs===1'b1 && rs_addr!==5'b0) &&
-                    (es_read_mem===1'b1 && rs_addr===es_reg_dest);
+                    (es_read_mem===1'b1 && rs_addr===es_reg_dest
+                    || es_mfc0===1'b1 && rs_addr===es_reg_dest
+                    || ms_mfc0===1'b1 && rs_addr===ms_reg_dest);
     assign rt_stall=(ds_use_rt===1'b1 && rt_addr!==5'b0) &&
-                    (es_read_mem===1'b1 && rt_addr===es_reg_dest);
-    assign stallD=rs_stall | rt_stall | alu_stall;
+                    (es_read_mem===1'b1 && rt_addr===es_reg_dest
+                    || es_mfc0===1'b1 && rt_addr===es_reg_dest
+                    || ms_mfc0===1'b1 && rt_addr===ms_reg_dest);
+    assign stallE=~(es_ex | ms_ex | ws_ex) & alu_stall;
+    assign stallD=~(es_ex | ms_ex | ws_ex) & (rs_stall | rt_stall | alu_stall);//流水线中有异常时，不阻塞流水线
     assign stallF=stallD;
 endmodule

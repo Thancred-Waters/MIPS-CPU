@@ -11,19 +11,34 @@ module wb_stage(
     //from ms
     input                           ms_to_ws_valid,
     input  [`MS_TO_WS_BUS_WD -1:0]  ms_to_ws_bus  ,
+    input  [`MS_EX_BUS_WD    -1:0]  ms_ex_bus     ,
     //to rf: for write back
     output [`WS_TO_RF_BUS_WD -1:0]  ws_to_rf_bus  ,
+    //to cp0
+    output  [ 3:0] c0_exception,
+    output  [ 4:0] c0_addr,
+    output  [31:0] c0_wdata,
+    output         c0_wb_valid,
+    output         c0_wb_bd,
+    output  [31:0] c0_wb_pc,
+    //from cp0
+    input          c0_valid,
+    input [31:0]   c0_res,
+    input          flush,
     //trace debug interface
     output [31:0] debug_wb_pc     ,
     output [ 3:0] debug_wb_rf_wen ,
     output [ 4:0] debug_wb_rf_wnum,
-    output [31:0] debug_wb_rf_wdata
+    output [31:0] debug_wb_rf_wdata,
+    //eret
+    output                          ws_ex
 );
 
 reg         ws_valid;
 wire        ws_ready_go;
 
 reg [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus_r;
+reg [`MS_EX_BUS_WD    -1:0] ms_ex_bus_r;
 wire [ 3:0] ws_gr_we;
 wire [ 4:0] ws_dest;
 wire [31:0] ws_final_result;
@@ -33,6 +48,28 @@ assign {ws_gr_we       ,  //72:69
         ws_final_result,  //63:32
         ws_pc             //31:0
        } = ms_to_ws_bus_r;
+
+//exception
+wire       ws_bd;
+wire       ws_sys;
+wire       ws_mfc0;
+wire       ws_mtc0;
+wire       ws_eret;
+wire [4:0] ws_addr;
+assign {ws_bd   ,
+        ws_sys  ,
+        ws_mfc0 ,
+        ws_mtc0 ,
+        ws_eret ,
+        ws_addr
+       } = ms_ex_bus_r;
+assign ws_ex        = (ws_eret | ws_sys) && ws_valid;
+assign c0_exception = {ws_sys,ws_mfc0,ws_mtc0,ws_eret};
+assign c0_addr      = ws_addr;
+assign c0_wdata     = ws_final_result;
+assign c0_wb_valid  = ws_valid;
+assign c0_wb_bd     = ws_bd;
+assign c0_wb_pc     = ws_pc;
 
 //判断是否存在寄存器冲突
 assign ws_write_reg=(ws_gr_we!=4'h0) && ws_valid;
@@ -52,23 +89,27 @@ always @(posedge clk) begin
     if (reset) begin
         ws_valid <= 1'b0;
     end
+    else if (flush) begin
+        ws_valid <= 1'b0;
+    end
     else if (ws_allowin) begin
         ws_valid <= ms_to_ws_valid;
     end
 
     if (ms_to_ws_valid && ws_allowin) begin
         ms_to_ws_bus_r <= ms_to_ws_bus;
+        ms_ex_bus_r    <= ms_ex_bus;
     end
 end
 
 assign rf_we    = ws_gr_we & {4{ws_valid}};
 assign rf_waddr = ws_dest;
-assign rf_wdata = ws_final_result;
+assign rf_wdata = c0_valid ? c0_res : ws_final_result;
 
 // debug info generate
 assign debug_wb_pc       = ws_pc;
 assign debug_wb_rf_wen   = rf_we;
 assign debug_wb_rf_wnum  = ws_dest;
-assign debug_wb_rf_wdata = ws_final_result;
+assign debug_wb_rf_wdata = c0_valid ? c0_res : ws_final_result;
 
 endmodule
