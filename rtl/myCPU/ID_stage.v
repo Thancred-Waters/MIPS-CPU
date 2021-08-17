@@ -156,12 +156,16 @@ wire        inst_sys;
 wire        inst_mfc0;
 wire        inst_mtc0;
 wire        inst_eret;
+wire        inst_break;
+wire        ov_valid;
 wire        ds_ex;
 assign ds_ex_bus = {fs_ex_bus_r ,//branch delay
                     inst_sys    ,//sys call
                     inst_mfc0   ,//mfc0
                     inst_mtc0   ,//mtc0
                     inst_eret   ,//eret
+                    inst_break  ,
+                    ov_valid    ,
                     rd          
                    };
 
@@ -301,10 +305,12 @@ assign inst_j      = op_d[6'h02];
 assign inst_jalr   = op_d[6'h00] & func_d[6'h09] & rt_d[5'h00] & sa_d[5'h00];
 
 assign inst_sys    = op_d[6'h00] & func_d[6'h0c];
+assign inst_break  = op_d[6'h00] & func_d[6'h0d];
 assign inst_mfc0   = op_d[6'h10] & rs_d[5'h00] & (ds_inst[10:3]==8'h00);
 assign inst_mtc0   = op_d[6'h10] & rs_d[5'h04] & (ds_inst[10:3]==8'h00);
 assign inst_eret   = op_d[6'h10] & func_d[6'h18] & ds_inst[25] & (ds_inst[24:6]==19'b0);
-assign ds_ex       = inst_sys | inst_mfc0 | inst_mtc0 | inst_eret;
+assign ov_valid    = inst_add | inst_addi | inst_sub;
+assign ds_ex       = inst_sys | inst_mfc0 | inst_mtc0 | inst_eret | inst_break;
 
 assign alu_op[ 0] = inst_add | inst_addu | inst_addi | inst_addiu | load_op | save_op | inst_jal | inst_bgezal | inst_bltzal | inst_jalr;//add
 assign alu_op[ 1] = inst_sub | inst_subu;//sub
@@ -364,7 +370,7 @@ assign res_from_mem = load_op;
 assign dst_is_r31   = inst_jal | inst_bgezal | inst_bltzal;
 assign dst_is_rt    = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | load_op | inst_mfc0;
 //需要用到rt寄存器
-assign gr_we        = (~save_op & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero & ~inst_j & ~inst_sys & ~inst_eret & ~inst_mtc0) | (inst_bgezal | inst_bltzal);
+assign gr_we        = (~save_op & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero & ~inst_j & ~ds_ex) | (inst_bgezal | inst_bltzal | inst_mfc0);
 //寄存器写使能
 assign mem_we       = save_op;
 

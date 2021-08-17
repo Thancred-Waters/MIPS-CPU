@@ -66,7 +66,7 @@ wire [35:0] ms_to_ds_bus;
 wire es_read_mem;
 wire [31:0] es_to_ds_bus;
 //cp0
-wire  [ 3:0] c0_exception;
+wire  [ 5:0] c0_exception;
 wire  [ 4:0] c0_addr;
 wire  [31:0] c0_wdata;
 wire         c0_wb_valid;

@@ -1,8 +1,9 @@
-`define CR_STATUS  5'b01100
-`define CR_COMPARE 5'b01011
-`define CR_CAUSE   5'b01101
-`define CR_EPC     5'b01110
-`define CR_COUNT   5'b01001
+`define CR_STATUS   5'b01100
+`define CR_COMPARE  5'b01011
+`define CR_CAUSE    5'b01101
+`define CR_EPC      5'b01110
+`define CR_COUNT    5'b01001
+`define CR_BADVADDR 5'b01000
 
 `define EX_INT  5'h00
 `define EX_ADEL 5'h04

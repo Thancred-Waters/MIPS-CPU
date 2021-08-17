@@ -25,12 +25,13 @@ module cp0_reg(
 //input
 input         clk,
 input         reset,
-input  [ 3:0] exception,
+input  [ 5:0] exception,
 input  [ 4:0] c0_addr,
 input  [31:0] c0_wdata,
 input         wb_valid,
 input         wb_bd,
 input  [31:0] wb_pc,
+input  [31:0] wb_badvaddr,
 //output
 output        c0_valid,
 output [31:0] c0_res,
@@ -42,18 +43,24 @@ output        ex_flush
     wire       op_mfc0;
     wire       op_sys;
     wire       op_eret;
+    wire       op_break;
+    wire       over_flow;
     wire       wb_ex;
     wire [4:0] wb_excode;
 
     assign {
-        op_sys  ,
-        op_mfc0 ,
-        op_mtc0 ,
-        op_eret
+        op_sys    ,
+        op_mfc0   ,
+        op_mtc0   ,
+        op_eret   ,
+        op_break  ,
+        over_flow
     } = exception;
 
-    assign wb_ex = op_sys;
-    assign wb_excode = {5{op_sys}} & `EX_SYS;
+    assign wb_ex = op_sys | op_break | over_flow;
+    assign wb_excode = {5{op_sys}}    & `EX_SYS
+                     | {5{op_break}}  & `EX_BP
+                     | {5{over_flow}} & `EX_OV;
 
     //reg status
     reg         c0_status_bev;
@@ -200,13 +207,21 @@ output        ex_flush
             c0_epc <= c0_wdata;
     end
 
+    //reg badvaddr
+    reg [31:0] c0_badvaddr;
+    always @(posedge clk) begin
+        if(wb_ex && wb_excode==`EX_ADEL)
+            c0_badvaddr <= wb_badvaddr;
+    end
+
     //output
     assign eret_pc  = c0_epc;
-    assign ex_flush = wb_ex;
+    assign ex_flush = wb_ex && wb_valid;//确保控制信号合法
     assign c0_valid = op_mfc0 && wb_valid;
-    assign c0_res   = {32{c0_addr==`CR_CAUSE}}   & c0_cause
-                    | {32{c0_addr==`CR_STATUS}}  & c0_status
-                    | {32{c0_addr==`CR_EPC}}     & c0_epc
-                    | {32{c0_addr==`CR_COMPARE}} & c0_compare
-                    | {32{c0_addr==`CR_COUNT}}   & c0_count; 
+    assign c0_res   = {32{c0_addr==`CR_CAUSE}}    & c0_cause
+                    | {32{c0_addr==`CR_STATUS}}   & c0_status
+                    | {32{c0_addr==`CR_EPC}}      & c0_epc
+                    | {32{c0_addr==`CR_COMPARE}}  & c0_compare
+                    | {32{c0_addr==`CR_COUNT}}    & c0_count
+                    | {32{c0_addr==`CR_BADVADDR}} & c0_badvaddr;
 endmodule

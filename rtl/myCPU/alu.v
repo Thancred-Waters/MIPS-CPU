@@ -2,14 +2,15 @@ module alu(
   input         clk,
   input         reset,
   input         flush,
-  input         es_mtc0,
-  input         ex_stop,
+  input         es_mtc0,//mtc0的结果为alu_src2
+  input         ex_stop,//位于异常指令后的指令，不能写hi和lo寄存器
   input  [19:0] alu_op,
   input  [31:0] alu_src1,
   input  [31:0] alu_src2,
   output [31:0] alu_result,
   output [31:0] mem_addr,//优化时序，减少延迟,
-  output        div_stall
+  output        div_stall,
+  output        over_flow//add addi sub subi溢出判断
 );
 
 wire op_add;   //�ӷ�����
@@ -85,6 +86,9 @@ assign adder_a   = alu_src1;
 assign adder_b   = (op_sub | op_slt | op_sltu) ? ~alu_src2 : alu_src2;
 assign adder_cin = (op_sub | op_slt | op_sltu) ? 1'b1      : 1'b0;
 assign {adder_cout, adder_result} = adder_a + adder_b + adder_cin;
+
+//over flow
+assign over_flow = (adder_a[31] ~^ adder_b[31]) & (adder_result[31] ^ adder_a[31]);//同号相加，结果异号
 
 // ADD, SUB result
 assign add_sub_result = adder_result;

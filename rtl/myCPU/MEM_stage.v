@@ -52,17 +52,29 @@ wire       ms_bd;
 wire       ms_sys;
 wire       ms_mtc0;
 wire       ms_eret;
+wire       ms_break;
+wire       ms_over_flow;
 wire [4:0] ms_addr;
-assign {ms_bd   ,
-        ms_sys  ,
-        ms_mfc0 ,
-        ms_mtc0 ,
-        ms_eret ,
+assign {ms_bd        ,
+        ms_sys       ,
+        ms_mfc0      ,
+        ms_mtc0      ,
+        ms_eret      ,
+        ms_break     ,
+        ms_over_flow ,
         ms_addr
        } = es_ex_bus_r; 
-assign ms_ex = (ms_eret | ms_sys) && ms_valid;
+assign ms_ex = (ms_eret | ms_sys | ms_break | ms_over_flow) && ms_valid;
 assign ms_mfc0_stall = ms_mfc0 && ms_valid;
-assign ms_ex_bus = es_ex_bus_r;
+assign ms_ex_bus = {ms_bd        ,
+                    ms_sys       ,
+                    ms_mfc0      ,
+                    ms_mtc0      ,
+                    ms_eret      ,
+                    ms_break     ,
+                    ms_over_flow ,
+                    ms_addr
+                    };
 
 //load-type inst
 wire [1:0] load_width;

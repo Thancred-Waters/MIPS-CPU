@@ -94,17 +94,32 @@ wire       es_bd;
 wire       es_sys;
 wire       es_mtc0;
 wire       es_eret;
+wire       es_break;
+wire       ov_valid;
+wire       over_flow;
+wire       es_over_flow;
 wire [4:0] es_addr;
-assign {es_bd   ,
-        es_sys  ,
-        es_mfc0 ,
-        es_mtc0 ,
-        es_eret ,
+assign {es_bd    ,
+        es_sys   ,
+        es_mfc0  ,
+        es_mtc0  ,
+        es_eret  ,
+        es_break ,
+        ov_valid ,
         es_addr
        } = ds_ex_bus_r; 
-assign es_ex_bus = ds_ex_bus_r;
+assign es_over_flow  = ov_valid & over_flow;
 assign es_mfc0_stall = es_mfc0 && es_valid;
-assign es_ex     = (es_sys | es_eret) & es_valid;
+assign es_ex     = (es_sys | es_eret | es_break | es_over_flow) & es_valid;
+assign es_ex_bus = {es_bd        ,
+                    es_sys       ,
+                    es_mfc0      ,
+                    es_mtc0      ,
+                    es_eret      ,
+                    es_break     ,
+                    es_over_flow ,
+                    es_addr
+                    };
 
 wire   ex_stop;
 assign ex_stop = ms_ex | ws_ex;
@@ -168,6 +183,7 @@ alu u_alu(
     .flush      (flush        ),
     .es_mtc0    (es_mtc0      ),
     .ex_stop    (ex_stop      ),
+    .over_flow  (over_flow    ),
     .alu_op     (es_alu_op    ),
     .alu_src1   (es_alu_src1  ),
     .alu_src2   (es_alu_src2  ),
