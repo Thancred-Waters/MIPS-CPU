@@ -256,24 +256,42 @@ Test begin!
 ----[1714935 ns] Number 8'd79 Functional Test Point PASS!!!
 ----[1721525 ns] Number 8'd80 Functional Test Point PASS!!!
         [1722000 ns] Test is running, debug_wb_pc = 0xbfc5fa78
-        [1732000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1742000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1752000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1762000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1772000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1782000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1792000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1802000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1812000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1822000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1832000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1842000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1852000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1862000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1872000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1882000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1892000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1902000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1912000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1922000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
-        [1932000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1732000 ns] Test is running, debug_wb_pc = 0xbfc5fb60
+----[1739265 ns] Number 8'd81 Functional Test Point PASS!!!
+        [1742000 ns] Test is running, debug_wb_pc = 0xbfc16cd0
+----[1747435 ns] Number 8'd82 Functional Test Point PASS!!!
+        [1752000 ns] Test is running, debug_wb_pc = 0xbfc0049c
+        [1762000 ns] Test is running, debug_wb_pc = 0xbfc0059c
+----[1763155 ns] Number 8'd83 Functional Test Point PASS!!!
+        [1772000 ns] Test is running, debug_wb_pc = 0xbfc692c0
+----[1778875 ns] Number 8'd84 Functional Test Point PASS!!!
+        [1782000 ns] Test is running, debug_wb_pc = 0xbfc0047c
+        [1792000 ns] Test is running, debug_wb_pc = 0xbfc00520
+----[1794595 ns] Number 8'd85 Functional Test Point PASS!!!
+        [1802000 ns] Test is running, debug_wb_pc = 0xbfc006a0
+----[1810315 ns] Number 8'd86 Functional Test Point PASS!!!
+        [1812000 ns] Test is running, debug_wb_pc = 0xbfc00388
+        [1822000 ns] Test is running, debug_wb_pc = 0xbfc00520
+----[1826035 ns] Number 8'd87 Functional Test Point PASS!!!
+        [1832000 ns] Test is running, debug_wb_pc = 0xbfc0067c
+----[1841755 ns] Number 8'd88 Functional Test Point PASS!!!
+        [1842000 ns] Test is running, debug_wb_pc = 0xbfc00d98
+        [1852000 ns] Test is running, debug_wb_pc = 0xbfc004c8
+----[1857495 ns] Number 8'd89 Functional Test Point PASS!!!
+        [1862000 ns] Test is running, debug_wb_pc = 0xbfc00484
+        [1872000 ns] Test is running, debug_wb_pc = 0xbfc0058c
+----[1873235 ns] Number 8'd90 Functional Test Point PASS!!!
+        [1882000 ns] Test is running, debug_wb_pc = 0xbfc0069c
+----[1888975 ns] Number 8'd91 Functional Test Point PASS!!!
+        [1892000 ns] Test is running, debug_wb_pc = 0xbfc00394
+        [1902000 ns] Test is running, debug_wb_pc = 0xbfc00500
+----[1904715 ns] Number 8'd92 Functional Test Point PASS!!!
+        [1912000 ns] Test is running, debug_wb_pc = 0xbfc004f4
+----[1920455 ns] Number 8'd93 Functional Test Point PASS!!!
+        [1922000 ns] Test is running, debug_wb_pc = 0xbfc9e8f4
+        [1932000 ns] Test is running, debug_wb_pc = 0xbfc003c0
+----[1936195 ns] Number 8'd94 Functional Test Point PASS!!!
+==============================================================
+Test end!
+----PASS!!!
+$finish called at time : 1936665 ns : File "D:/Programs/vivado/CPU_CDE/mycpu_verify/testbench/mycpu_tb.v" Line 267

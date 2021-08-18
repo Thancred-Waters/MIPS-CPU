@@ -32,6 +32,7 @@ input         wb_valid,
 input         wb_bd,
 input  [31:0] wb_pc,
 input  [31:0] wb_badvaddr,
+input  [ 5:0] ext_int_in,
 //output
 output        c0_valid,
 output [31:0] c0_res,
@@ -48,6 +49,8 @@ output        ex_flush
     wire       adel;
     wire       ades;
     wire       ri;
+    wire [5:0] hw;
+    wire [1:0] sw;
     wire       wb_ex;
     wire [4:0] wb_excode;
 
@@ -62,9 +65,9 @@ output        ex_flush
         ades      ,
         ri
     } = exception;
-
-    assign wb_ex = (op_sys | op_break | over_flow | adel | ades | ri) & wb_valid;
-    assign wb_excode = adel      ? `EX_ADEL :
+    assign wb_ex = (op_sys | op_break | over_flow | adel | ades | ri | hw!=6'b00 | sw!=2'b00) & wb_valid;
+    assign wb_excode = hw!=6'b00 | sw!=2'b00 ? `EX_INT  :
+                       adel      ? `EX_ADEL :
                        ri        ? `EX_RI   :
                        over_flow ? `EX_OV   :
                        op_break  ? `EX_BP   :
@@ -188,8 +191,8 @@ output        ex_flush
         if(reset)
             c0_cause_ip[7:2] <= 6'b0;
         else begin
-            c0_cause_ip[7]   <= c0_cause_ti;
-            c0_cause_ip[6:2] <= 5'b0;
+            c0_cause_ip[7]   <= ext_int_in[5] | c0_cause_ti;
+            c0_cause_ip[6:2] <= ext_int_in[4:0];
         end 
     end
     always @(posedge clk) begin
@@ -222,6 +225,16 @@ output        ex_flush
         if(wb_ex && (wb_excode==`EX_ADEL || wb_excode==`EX_ADES))
             c0_badvaddr <= wb_badvaddr;
     end
+
+    //int
+    genvar i;
+    generate
+        for (i=0; i<=5; i=i+1) begin : gen_hw_int
+            assign hw[i] = c0_cause_ip[i+2] & c0_status_im[i+2] & c0_status_ie & ~c0_status_exl;
+        end
+    endgenerate
+    assign sw[1] = c0_cause_ip[1] & c0_status_im[1] & c0_status_ie & ~c0_status_exl;
+    assign sw[0] = c0_cause_ip[0] & c0_status_im[0] & c0_status_ie & ~c0_status_exl;
 
     //output
     assign eret_pc  = c0_epc;

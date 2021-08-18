@@ -3,6 +3,8 @@
 module mycpu_top(
     input         clk,
     input         resetn,
+    // exception interface
+    input  [ 5:0] ext_int_in,
     // inst sram interface
     output        inst_sram_en,
     output [ 3:0] inst_sram_wen,
@@ -264,6 +266,7 @@ cp0_reg cp0(
     .wb_bd       (c0_wb_bd),
     .wb_pc       (c0_wb_pc),
     .wb_badvaddr (ws_badvaddr),
+    .ext_int_in  (ext_int_in),
 //output
     .c0_valid    (c0_valid),
     .c0_res      (c0_res),

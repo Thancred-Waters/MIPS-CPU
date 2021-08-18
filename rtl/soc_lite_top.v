@@ -138,6 +138,7 @@ wire [31:0] conf_rdata;
 mycpu_top cpu(
     .clk              (cpu_clk   ),
     .resetn           (cpu_resetn),  //low active
+    .ext_int_in       (6'h00     ),  //hardware exception
 
     .inst_sram_en     (cpu_inst_en   ),
     .inst_sram_wen    (cpu_inst_wen  ),
