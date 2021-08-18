@@ -46,6 +46,8 @@ reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
 reg  [`DS_EX_BUS_WD    -1:0] ds_ex_bus_r;
 reg  [4:0]  ds_load_mem_bus_r;
 reg  [3:0]  ds_save_mem_bus_r;
+wire [1:0]  load_width    ;
+wire [1:0]  load_lr       ;
 wire [1:0]  save_width    ;
 wire [1:0]  save_lr       ;
 wire [3:0]  save_lwe      ;
@@ -87,43 +89,6 @@ assign {es_alu_op      ,  //144:125
         es_pc             //31 :0
        } = ds_to_es_bus_r;
 
-assign {save_width,save_lr} = ds_save_mem_bus_r;
-
-//exception
-wire       es_bd;
-wire       es_sys;
-wire       es_mtc0;
-wire       es_eret;
-wire       es_break;
-wire       ov_valid;
-wire       over_flow;
-wire       es_over_flow;
-wire [4:0] es_addr;
-assign {es_bd    ,
-        es_sys   ,
-        es_mfc0  ,
-        es_mtc0  ,
-        es_eret  ,
-        es_break ,
-        ov_valid ,
-        es_addr
-       } = ds_ex_bus_r; 
-assign es_over_flow  = ov_valid & over_flow;
-assign es_mfc0_stall = es_mfc0 && es_valid;
-assign es_ex     = (es_sys | es_eret | es_break | es_over_flow) & es_valid;
-assign es_ex_bus = {es_bd        ,
-                    es_sys       ,
-                    es_mfc0      ,
-                    es_mtc0      ,
-                    es_eret      ,
-                    es_break     ,
-                    es_over_flow ,
-                    es_addr
-                    };
-
-wire   ex_stop;
-assign ex_stop = ms_ex | ws_ex;
-
 //判断是否存在寄存器冲突
 assign es_write_reg=es_gr_we && es_valid;
 assign es_reg_dest=es_dest;
@@ -135,6 +100,7 @@ wire [31:0] mem_addr      ;
 
 wire es_res_from_mem;
 
+assign es_load_mem_bus = {ds_load_mem_bus_r,mem_addr[1:0]};
 assign es_res_from_mem = es_load_op;
 assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_gr_we       ,  //69:69
@@ -169,6 +135,63 @@ always @(posedge clk) begin
     end
 end
 
+//exception
+wire        es_bd;
+wire        es_sys;
+wire        es_mtc0;
+wire        es_eret;
+wire        es_break;
+wire        ov_valid;
+wire        over_flow;
+wire        es_over_flow;
+wire        pc_adel;
+wire        es_adel;
+wire        es_ades;
+wire        es_ri;
+wire [ 4:0] es_addr;
+wire [31:0] pc_badvaddr;
+wire [31:0] es_badvaddr;
+assign {es_bd    ,
+        es_sys   ,
+        es_mfc0  ,
+        es_mtc0  ,
+        es_eret  ,
+        es_break ,
+        ov_valid ,
+        pc_adel  ,
+        es_ri    ,
+        es_addr  ,
+        pc_badvaddr
+       } = ds_ex_bus_r; 
+assign es_over_flow  = ov_valid & over_flow;
+assign es_mfc0_stall = es_mfc0 && es_valid;
+assign load_width    = ds_load_mem_bus_r[4:3];
+assign load_lr       = ds_load_mem_bus_r[1:0];
+assign es_adel       = (load_width==2'b11 && load_lr==2'b00 && mem_addr[1:0]!=2'b00)
+                     || (load_width==2'b10 && mem_addr[0]!=1'b0)
+                     || pc_adel;
+assign es_ades       = (save_width==2'b11 && mem_addr[1:0]!=2'b00)
+                     || (save_width==2'b10 && mem_addr[0]!=1'b0);
+assign es_badvaddr   = pc_adel ? pc_badvaddr : mem_addr;
+assign es_ex     = (es_sys | es_eret | es_break | es_over_flow | es_adel | es_ades | es_ri) & es_valid;
+assign es_ex_bus = {es_bd        ,
+                    es_sys       ,
+                    es_mfc0      ,
+                    es_mtc0      ,
+                    es_eret      ,
+                    es_break     ,
+                    es_over_flow ,
+                    es_adel      ,
+                    es_ades      ,
+                    es_ri        ,
+                    es_addr      ,
+                    es_badvaddr
+                    };
+
+wire   ex_stop;
+assign ex_stop = es_ex | ms_ex | ws_ex;
+
+//ALU
 assign es_alu_src1 = es_src1_is_sa  ? {27'b0, es_imm[10:6]} : 
                      es_src1_is_pc  ? es_pc[31:0] :
                                       es_rs_value;
@@ -193,8 +216,8 @@ alu u_alu(
     );
 assign alu_stall = (div_stall===1'b1) & es_valid;
 
-assign es_load_mem_bus = {ds_load_mem_bus_r,mem_addr[1:0]};
-
+//save
+assign {save_width,save_lr} = ds_save_mem_bus_r;
 assign save_bwe = mem_addr[1:0]==2'b00 ? 4'b0001 :
                   mem_addr[1:0]==2'b01 ? 4'b0010 :
                   mem_addr[1:0]==2'b10 ? 4'b0100 :

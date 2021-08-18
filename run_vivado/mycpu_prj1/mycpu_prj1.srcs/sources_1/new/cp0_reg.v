@@ -25,7 +25,7 @@ module cp0_reg(
 //input
 input         clk,
 input         reset,
-input  [ 5:0] exception,
+input  [ 8:0] exception,
 input  [ 4:0] c0_addr,
 input  [31:0] c0_wdata,
 input         wb_valid,
@@ -45,6 +45,9 @@ output        ex_flush
     wire       op_eret;
     wire       op_break;
     wire       over_flow;
+    wire       adel;
+    wire       ades;
+    wire       ri;
     wire       wb_ex;
     wire [4:0] wb_excode;
 
@@ -54,13 +57,19 @@ output        ex_flush
         op_mtc0   ,
         op_eret   ,
         op_break  ,
-        over_flow
+        over_flow ,
+        adel      ,
+        ades      ,
+        ri
     } = exception;
 
-    assign wb_ex = op_sys | op_break | over_flow;
-    assign wb_excode = {5{op_sys}}    & `EX_SYS
-                     | {5{op_break}}  & `EX_BP
-                     | {5{over_flow}} & `EX_OV;
+    assign wb_ex = (op_sys | op_break | over_flow | adel | ades | ri) & wb_valid;
+    assign wb_excode = adel      ? `EX_ADEL :
+                       ri        ? `EX_RI   :
+                       over_flow ? `EX_OV   :
+                       op_break  ? `EX_BP   :
+                       op_sys    ? `EX_SYS  :
+                       ades      ? `EX_ADES : 5'h00;
 
     //reg status
     reg         c0_status_bev;
@@ -210,13 +219,13 @@ output        ex_flush
     //reg badvaddr
     reg [31:0] c0_badvaddr;
     always @(posedge clk) begin
-        if(wb_ex && wb_excode==`EX_ADEL)
+        if(wb_ex && (wb_excode==`EX_ADEL || wb_excode==`EX_ADES))
             c0_badvaddr <= wb_badvaddr;
     end
 
     //output
     assign eret_pc  = c0_epc;
-    assign ex_flush = wb_ex && wb_valid;//确保控制信号合法
+    assign ex_flush = wb_ex;//确保控制信号合法
     assign c0_valid = op_mfc0 && wb_valid;
     assign c0_res   = {32{c0_addr==`CR_CAUSE}}    & c0_cause
                     | {32{c0_addr==`CR_STATUS}}   & c0_status

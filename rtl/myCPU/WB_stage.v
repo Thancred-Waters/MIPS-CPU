@@ -15,12 +15,13 @@ module wb_stage(
     //to rf: for write back
     output [`WS_TO_RF_BUS_WD -1:0]  ws_to_rf_bus  ,
     //to cp0
-    output  [ 5:0] c0_exception,
+    output  [ 8:0] c0_exception,
     output  [ 4:0] c0_addr,
     output  [31:0] c0_wdata,
     output         c0_wb_valid,
     output         c0_wb_bd,
     output  [31:0] c0_wb_pc,
+    output  [31:0] ws_badvaddr,
     //from cp0
     input          c0_valid,
     input [31:0]   c0_res,
@@ -50,14 +51,17 @@ assign {ws_gr_we       ,  //72:69
        } = ms_to_ws_bus_r;
 
 //exception
-wire       ws_bd;
-wire       ws_sys;
-wire       ws_mfc0;
-wire       ws_mtc0;
-wire       ws_eret;
-wire       ws_break;
-wire       ws_over_flow;
-wire [4:0] ws_addr;
+wire        ws_bd;
+wire        ws_sys;
+wire        ws_mfc0;
+wire        ws_mtc0;
+wire        ws_eret;
+wire        ws_break;
+wire        ws_over_flow;
+wire        ws_adel;
+wire        ws_ades;
+wire        ws_ri;
+wire [ 4:0] ws_addr;
 assign {ws_bd        ,
         ws_sys       ,
         ws_mfc0      ,
@@ -65,10 +69,14 @@ assign {ws_bd        ,
         ws_eret      ,
         ws_break     ,
         ws_over_flow ,
-        ws_addr
+        ws_adel      ,
+        ws_ades      ,
+        ws_ri        ,
+        ws_addr      ,
+        ws_badvaddr
        } = ms_ex_bus_r;
-assign ws_ex        = (ws_eret | ws_sys | ws_break | ws_over_flow) && ws_valid;
-assign c0_exception = {ws_sys,ws_mfc0,ws_mtc0,ws_eret,ws_break,ws_over_flow};
+assign ws_ex        = (ws_eret | ws_sys | ws_break | ws_over_flow | ws_adel | ws_ades | ws_ri) && ws_valid;
+assign c0_exception = {ws_sys,ws_mfc0,ws_mtc0,ws_eret,ws_break,ws_over_flow,ws_adel,ws_ades,ws_ri};
 assign c0_addr      = ws_addr;
 assign c0_wdata     = ws_final_result;
 assign c0_wb_valid  = ws_valid;

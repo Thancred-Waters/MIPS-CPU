@@ -243,9 +243,37 @@ Test begin!
         [1662000 ns] Test is running, debug_wb_pc = 0xbfc0049c
 ----[1664845 ns] Number 8'd72 Functional Test Point PASS!!!
 ----[1671175 ns] Number 8'd73 Functional Test Point PASS!!!
---------------------------------------------------------------
-[1671697 ns] Error!!!
-    reference: PC = 0xbfc00380, wb_rf_wnum = 0x1a, wb_rf_wdata = 0x00018027
-    mycpu    : PC = 0xbfc68e4c, wb_rf_wnum = 0x02, wb_rf_wdata = 0x00000000
---------------------------------------------------------------
-$finish called at time : 1671737 ns : File "D:/Programs/vivado/CPU_CDE/mycpu_verify/testbench/mycpu_tb.v" Line 166
+        [1672000 ns] Test is running, debug_wb_pc = 0xbfc004cc
+----[1678335 ns] Number 8'd74 Functional Test Point PASS!!!
+        [1682000 ns] Test is running, debug_wb_pc = 0xbfc003a0
+----[1685515 ns] Number 8'd75 Functional Test Point PASS!!!
+        [1692000 ns] Test is running, debug_wb_pc = 0xbfc00380
+----[1692675 ns] Number 8'd76 Functional Test Point PASS!!!
+----[1700125 ns] Number 8'd77 Functional Test Point PASS!!!
+        [1702000 ns] Test is running, debug_wb_pc = 0xbfc0067c
+----[1707565 ns] Number 8'd78 Functional Test Point PASS!!!
+        [1712000 ns] Test is running, debug_wb_pc = 0xbfc006b4
+----[1714935 ns] Number 8'd79 Functional Test Point PASS!!!
+----[1721525 ns] Number 8'd80 Functional Test Point PASS!!!
+        [1722000 ns] Test is running, debug_wb_pc = 0xbfc5fa78
+        [1732000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1742000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1752000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1762000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1772000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1782000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1792000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1802000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1812000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1822000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1832000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1842000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1852000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1862000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1872000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1882000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1892000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1902000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1912000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1922000 ns] Test is running, debug_wb_pc = 0xbfc5fa90
+        [1932000 ns] Test is running, debug_wb_pc = 0xbfc5fa90

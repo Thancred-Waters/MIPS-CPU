@@ -48,13 +48,17 @@ assign {ms_res_from_mem,  //70:70 是否来自内存
        } = es_to_ms_bus_r;
 
 //exception
-wire       ms_bd;
-wire       ms_sys;
-wire       ms_mtc0;
-wire       ms_eret;
-wire       ms_break;
-wire       ms_over_flow;
-wire [4:0] ms_addr;
+wire        ms_bd;
+wire        ms_sys;
+wire        ms_mtc0;
+wire        ms_eret;
+wire        ms_break;
+wire        ms_over_flow;
+wire        ms_adel;
+wire        ms_ades;
+wire        ms_ri;
+wire [ 4:0] ms_addr;
+wire [31:0] ms_badvaddr;
 assign {ms_bd        ,
         ms_sys       ,
         ms_mfc0      ,
@@ -62,9 +66,13 @@ assign {ms_bd        ,
         ms_eret      ,
         ms_break     ,
         ms_over_flow ,
-        ms_addr
+        ms_adel      ,
+        ms_ades      ,
+        ms_ri        ,
+        ms_addr      ,
+        ms_badvaddr
        } = es_ex_bus_r; 
-assign ms_ex = (ms_eret | ms_sys | ms_break | ms_over_flow) && ms_valid;
+assign ms_ex = (ms_eret | ms_sys | ms_break | ms_over_flow | ms_adel | ms_ades | ms_ri) && ms_valid;
 assign ms_mfc0_stall = ms_mfc0 && ms_valid;
 assign ms_ex_bus = {ms_bd        ,
                     ms_sys       ,
@@ -73,7 +81,11 @@ assign ms_ex_bus = {ms_bd        ,
                     ms_eret      ,
                     ms_break     ,
                     ms_over_flow ,
-                    ms_addr
+                    ms_adel      , 
+                    ms_ades      ,
+                    ms_ri        ,
+                    ms_addr      ,
+                    ms_badvaddr
                     };
 
 //load-type inst

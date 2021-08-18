@@ -33,10 +33,9 @@ wire        to_fs_valid;
 wire [31:0] seq_pc;
 wire [31:0] nextpc;
 
-wire         is_branch;//当前指令是否转移延迟槽指令
+
 wire         br_taken;//是否选择将nextpc置为跳转地址
 wire [ 31:0] br_target;//pc跳转目标
-assign is_branch = br_bus[33];
 assign br_taken = br_bus[32];
 assign br_target = br_bus[31:0];
 
@@ -44,7 +43,15 @@ wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
 assign fs_to_ds_bus = {fs_inst ,
                        fs_pc   };
-assign fs_ex_bus    = {is_branch};
+
+//exception
+wire        is_branch;//当前指令是否转移延迟槽指令
+wire        fs_adel;
+wire [31:0] fs_badvaddr; 
+
+assign is_branch    = br_bus[33];
+assign fs_adel      = fs_pc[1:0]!=2'b00;
+assign fs_ex_bus    = {is_branch,fs_adel,fs_pc};
 
 // pre-IF stage
 assign to_fs_valid  = ~reset;

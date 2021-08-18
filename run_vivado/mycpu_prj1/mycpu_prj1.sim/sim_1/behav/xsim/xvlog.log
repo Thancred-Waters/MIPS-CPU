@@ -4,14 +4,14 @@ INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_ve
 INFO: [VRFC 10-311] analyzing module inst_ram
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/EXE_stage.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module exe_stage
-INFO: [VRFC 10-2458] undeclared symbol es_mfc0, assumed default net type wire [D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/EXE_stage.v:104]
+INFO: [VRFC 10-2458] undeclared symbol es_mfc0, assumed default net type wire [D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/EXE_stage.v:156]
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/ID_stage.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module id_stage
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/IF_stage.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module if_stage
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/MEM_stage.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module mem_stage
-INFO: [VRFC 10-2458] undeclared symbol ms_mfc0, assumed default net type wire [D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/MEM_stage.v:60]
+INFO: [VRFC 10-2458] undeclared symbol ms_mfc0, assumed default net type wire [D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/MEM_stage.v:64]
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/WB_stage.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module wb_stage
 INFO: [VRFC 10-2263] Analyzing Verilog file "D:/Programs/vivado/CPU_CDE/mycpu_verify/rtl/myCPU/alu.v" into library xil_defaultlib

@@ -66,7 +66,7 @@ wire [35:0] ms_to_ds_bus;
 wire es_read_mem;
 wire [31:0] es_to_ds_bus;
 //cp0
-wire  [ 5:0] c0_exception;
+wire  [ 8:0] c0_exception;
 wire  [ 4:0] c0_addr;
 wire  [31:0] c0_wdata;
 wire         c0_wb_valid;
@@ -75,6 +75,7 @@ wire  [31:0] c0_wb_pc;
 wire         c0_valid;
 wire  [31:0] c0_res;
 wire  [31:0] eret_pc;
+wire  [31:0] ws_badvaddr;
 wire         eret_flush;
 wire         ex_flush;
 wire         flush;
@@ -238,6 +239,7 @@ wb_stage wb_stage(
     .c0_wb_valid    (c0_wb_valid    ),
     .c0_wb_bd       (c0_wb_bd       ),
     .c0_wb_pc       (c0_wb_pc       ),
+    .ws_badvaddr    (ws_badvaddr    ),
     //from cp0
     .c0_valid(c0_valid),
     .c0_res(c0_res),
@@ -253,20 +255,21 @@ wb_stage wb_stage(
 
 cp0_reg cp0(
 //input
-    .clk(clk),
-    .reset(reset),
-    .exception(c0_exception),
-    .c0_addr(c0_addr),
-    .c0_wdata(c0_wdata),
-    .wb_valid(c0_wb_valid),
-    .wb_bd(c0_wb_bd),
-    .wb_pc(c0_wb_pc),
+    .clk         (clk),
+    .reset       (reset),
+    .exception   (c0_exception),
+    .c0_addr     (c0_addr),
+    .c0_wdata    (c0_wdata),
+    .wb_valid    (c0_wb_valid),
+    .wb_bd       (c0_wb_bd),
+    .wb_pc       (c0_wb_pc),
+    .wb_badvaddr (ws_badvaddr),
 //output
-    .c0_valid(c0_valid),
-    .c0_res(c0_res),
-    .eret_pc(eret_pc),
-    .eret_flush(eret_flush),
-    .ex_flush(ex_flush)
+    .c0_valid    (c0_valid),
+    .c0_res      (c0_res),
+    .eret_pc     (eret_pc),
+    .eret_flush  (eret_flush),
+    .ex_flush    (ex_flush)
 );
 
 hazard hazard(

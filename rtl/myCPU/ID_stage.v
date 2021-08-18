@@ -151,24 +151,6 @@ wire        inst_jr;
 wire        inst_j;
 wire        inst_jalr;
 
-//exception
-wire        inst_sys;
-wire        inst_mfc0;
-wire        inst_mtc0;
-wire        inst_eret;
-wire        inst_break;
-wire        ov_valid;
-wire        ds_ex;
-assign ds_ex_bus = {fs_ex_bus_r ,//branch delay
-                    inst_sys    ,//sys call
-                    inst_mfc0   ,//mfc0
-                    inst_mtc0   ,//mtc0
-                    inst_eret   ,//eret
-                    inst_break  ,
-                    ov_valid    ,
-                    rd          
-                   };
-
 //branch & jump
 wire        branch_zero;
 wire        is_branch;
@@ -208,7 +190,7 @@ assign ds_to_es_bus = {alu_op      ,  //144:125
                        imm         ,  //111:96
                        rs_value    ,  //95 :64
                        rt_value    ,  //63 :32
-                       ds_pc          //31 :0
+                       ds_pc //31 :0
                       };
 
 assign ds_ready_go    = ~stallD;
@@ -247,6 +229,33 @@ decoder_5_32 u_dec3(.in(rt  ), .out(rt_d  ));
 decoder_5_32 u_dec4(.in(rd  ), .out(rd_d  ));
 decoder_5_32 u_dec5(.in(sa  ), .out(sa_d  ));
 
+//exception bus : ds -> es
+wire        ds_bd;
+wire        inst_sys;
+wire        inst_mfc0;
+wire        inst_mtc0;
+wire        inst_eret;
+wire        inst_break;
+wire        ov_valid;
+wire        ds_adel;
+wire        ds_ri;
+wire [31:0] ds_badvaddr;
+wire        ds_ex;
+assign {ds_bd,ds_adel,ds_badvaddr} = fs_ex_bus_r;
+assign ds_ex_bus = {ds_bd       ,//branch delay
+                    inst_sys    ,//sys call
+                    inst_mfc0   ,//mfc0
+                    inst_mtc0   ,//mtc0
+                    inst_eret   ,//eret
+                    inst_break  ,
+                    ov_valid    ,
+                    ds_adel     ,
+                    ds_ri       ,
+                    rd          ,
+                    ds_badvaddr
+                   };
+
+//inst decode
 assign inst_add    = op_d[6'h00] & func_d[6'h20] & sa_d[5'h00];
 assign inst_addu   = op_d[6'h00] & func_d[6'h21] & sa_d[5'h00];
 assign inst_sub    = op_d[6'h00] & func_d[6'h22] & sa_d[5'h00];
@@ -304,14 +313,7 @@ assign inst_jr     = op_d[6'h00] & func_d[6'h08] & rt_d[5'h00] & rd_d[5'h00] & s
 assign inst_j      = op_d[6'h02];
 assign inst_jalr   = op_d[6'h00] & func_d[6'h09] & rt_d[5'h00] & sa_d[5'h00];
 
-assign inst_sys    = op_d[6'h00] & func_d[6'h0c];
-assign inst_break  = op_d[6'h00] & func_d[6'h0d];
-assign inst_mfc0   = op_d[6'h10] & rs_d[5'h00] & (ds_inst[10:3]==8'h00);
-assign inst_mtc0   = op_d[6'h10] & rs_d[5'h04] & (ds_inst[10:3]==8'h00);
-assign inst_eret   = op_d[6'h10] & func_d[6'h18] & ds_inst[25] & (ds_inst[24:6]==19'b0);
-assign ov_valid    = inst_add | inst_addi | inst_sub;
-assign ds_ex       = inst_sys | inst_mfc0 | inst_mtc0 | inst_eret | inst_break;
-
+//alu encode
 assign alu_op[ 0] = inst_add | inst_addu | inst_addi | inst_addiu | load_op | save_op | inst_jal | inst_bgezal | inst_bltzal | inst_jalr;//add
 assign alu_op[ 1] = inst_sub | inst_subu;//sub
 assign alu_op[ 2] = inst_slt | inst_slti;//slt
@@ -333,6 +335,21 @@ assign alu_op[17] = inst_mflo;
 assign alu_op[18] = inst_mthi;
 assign alu_op[19] = inst_mtlo;
 
+//exception decode
+assign inst_sys    = op_d[6'h00] & func_d[6'h0c];
+assign inst_break  = op_d[6'h00] & func_d[6'h0d];
+assign inst_mfc0   = op_d[6'h10] & rs_d[5'h00] & (ds_inst[10:3]==8'h00);
+assign inst_mtc0   = op_d[6'h10] & rs_d[5'h04] & (ds_inst[10:3]==8'h00);
+assign inst_eret   = op_d[6'h10] & func_d[6'h18] & ds_inst[25] & (ds_inst[24:6]==19'b0);
+assign ov_valid    = inst_add | inst_addi | inst_sub;
+assign ds_ri       = alu_op==20'b0 && ~save_op && ~load_op 
+                   && ~inst_bne && ~inst_beq && ~inst_j && ~inst_jr
+                   && ~inst_bltz && ~inst_blez && ~inst_bgtz && ~inst_bgez
+                   && ~inst_sys && ~inst_break && ~inst_mfc0
+                   && ~inst_mtc0 && ~inst_eret
+                   && ds_inst!=32'b0; 
+assign ds_ex       = inst_sys | inst_mfc0 | inst_mtc0 | inst_eret | inst_break | ds_ri;
+
 //load op
 assign load_op      = inst_lw | inst_lb | inst_lbu | inst_lh | inst_lhu | load_lr;//是否从内存中获取数据
 assign load_width   = {2{inst_lb | inst_lbu}} & 2'b01 
@@ -353,25 +370,29 @@ assign save_lr      = {inst_swl,inst_swr};
 assign ds_save_mem_bus = {save_width,save_lr};
 //save op
 
-assign branch_zero  = inst_bgez | inst_bgtz | inst_blez | inst_bltz | inst_bgezal | inst_bltzal;
 //需要与0比较的跳转信号
+assign branch_zero  = inst_bgez | inst_bgtz | inst_blez | inst_bltz | inst_bgezal | inst_bltzal;
+
 assign src1_is_sa   = inst_sll   | inst_srl | inst_sra;
 assign src1_is_pc   = inst_jal | inst_bgezal | inst_bltzal | inst_jalr;
-assign ds_use_rs    = (~(src1_is_sa | src1_is_pc | inst_j | ds_ex) | inst_bgezal | inst_bltzal | inst_jalr) & ds_valid;
 //需要用到rs寄存器
+assign ds_use_rs    = (~(src1_is_sa | src1_is_pc | inst_j | ds_ex) | inst_bgezal | inst_bltzal | inst_jalr) & ds_valid;
 assign rs_addr      = rs;
+
 assign src2_is_imm  = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | load_op | save_op;
 assign src2_is_8    = inst_jal | inst_bgezal | inst_bltzal | inst_jalr;
 assign src2_zero_extend = inst_andi | inst_ori | inst_xori;
-assign ds_use_rt    = (~(src2_is_imm | src2_is_8 | inst_mthi | inst_mtlo | branch_zero | inst_j | ds_ex) | save_op | inst_mtc0) & ds_valid;
 //sw需要将rt中的值写入内存，因此也需要检查写后读相关
+assign ds_use_rt    = (~(src2_is_imm | src2_is_8 | inst_mthi | inst_mtlo | branch_zero | inst_j | ds_ex) | save_op | inst_mtc0) & ds_valid;
 assign rt_addr      = rt;
+
 assign res_from_mem = load_op;
 assign dst_is_r31   = inst_jal | inst_bgezal | inst_bltzal;
+//需要写rt寄存器
 assign dst_is_rt    = inst_addi | inst_addiu | inst_slti | inst_sltiu | inst_andi | inst_ori | inst_xori | inst_lui | load_op | inst_mfc0;
-//需要用到rt寄存器
-assign gr_we        = (~save_op & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero & ~inst_j & ~ds_ex) | (inst_bgezal | inst_bltzal | inst_mfc0);
+
 //寄存器写使能
+assign gr_we        = (~save_op & ~inst_beq & ~inst_bne & ~inst_jr & ~branch_zero & ~inst_j & ~ds_ex) | (inst_bgezal | inst_bltzal | inst_mfc0);
 assign mem_we       = save_op;
 
 assign dest         = dst_is_r31 ? 5'd31 :
@@ -415,8 +436,8 @@ assign rt_value = {32{forward_rt==2'b11}} & es_to_ds_bus
                 | {32{forward_rt==2'b10}} & ms_forward_data 
                 | {32{forward_rt==2'b01}} & ws_forward_data
                 | {32{forward_rt==2'b00}} & rf_rdata2;
-//data forward
-
+                
+//branch
 assign rs_eq_rt = (rs_value == rt_value);
 assign rs_gt_z  = ($signed(rs_value) > 0);
 assign rs_lt_z  = ($signed(rs_value) < 0);
